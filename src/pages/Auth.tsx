@@ -37,11 +37,11 @@ const Auth = () => {
             data: {
               full_name: fullName,
             },
-            emailRedirectTo: `${window.location.origin}/role-selection`,
           },
         });
         if (error) throw error;
-        toast.success("Account created! Please check your email.");
+        toast.success("Account created! Redirecting to profile setup...");
+        navigate("/role-selection");
       }
     } catch (error: any) {
       toast.error(error.message || "An error occurred");
