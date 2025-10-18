@@ -9,6 +9,10 @@ import RoleSelection from "./pages/RoleSelection";
 import StudentDashboard from "./pages/StudentDashboard";
 import FacultyDashboard from "./pages/FacultyDashboard";
 import NotFound from "./pages/NotFound";
+import Calendar from "./pages/student/Calendar";
+import Profile from "./pages/student/Profile";
+import Attendance from "./pages/student/Attendance";
+import Timetable from "./pages/student/Timetable";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +27,10 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/role-selection" element={<RoleSelection />} />
           <Route path="/student" element={<StudentDashboard />} />
+          <Route path="/student/calendar" element={<Calendar />} />
+          <Route path="/student/profile" element={<Profile />} />
+          <Route path="/student/attendance" element={<Attendance />} />
+          <Route path="/student/timetable" element={<Timetable />} />
           <Route path="/faculty" element={<FacultyDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
