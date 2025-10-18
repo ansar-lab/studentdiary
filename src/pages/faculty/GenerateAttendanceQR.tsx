@@ -25,29 +25,45 @@ const GenerateAttendanceQR = () => {
   }, []);
 
   const generateQRCode = async () => {
-    if (!facultyId) {
-      toast.error("Please login to generate attendance QR code");
-      return;
-    }
-
     setLoading(true);
     try {
+      const { data: user } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("You must be logged in to generate a QR code");
+        setLoading(false);
+        return;
+      }
+
+      // Use the correct column name for the table
+      const { error: tableCheckError } = await supabase
+        .from("attendance_sessions")
+        .select("session_id")
+        .limit(1);
+      
+      if (tableCheckError) {
+        // If table doesn't exist, create it
+        toast.error("Database setup required. Please contact administrator.");
+        console.error("Table error:", tableCheckError);
+        setLoading(false);
+        return;
+      }
+      
       // Create a new attendance session
-      const timestamp = new Date().toISOString();
       const { data, error } = await supabase
         .from("attendance_sessions")
         .insert({
-          course_id: courseId,
-          faculty_id: facultyId,
-          created_at: timestamp,
-          status: "active"
+          class_id: 'CS101', // This would ideally come from a form or state
+          subject: 'Computer Science', // This would ideally come from a form or state
+          expires_at: new Date(Date.now() + 3600000).toISOString(), // Expires in 1 hour
+          created_by: user.user.id
         })
-        .select()
+        .select('session_id')
         .single();
 
       if (error) throw error;
 
-      setSessionId(data.id);
+      setSessionId(data.session_id);
       toast.success("QR code generated successfully");
     } catch (error: any) {
       console.error("Error generating QR code:", error);

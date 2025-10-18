@@ -53,25 +53,34 @@ const MarkAttendance = () => {
     setVerificationStep('qr');
     setError(null);
     
-    // Create a small delay to ensure the div is rendered
-    setTimeout(() => {
-      const html5QrCode = new Html5Qrcode(scannerDivId);
-      scannerRef.current = html5QrCode;
-      
-      html5QrCode.start(
-        { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
-        onScanSuccess,
-        onScanFailure
-      ).catch((err) => {
-        console.error("Failed to start scanner:", err);
-        setError("Failed to start camera. Please check permissions.");
+    // Request camera permissions explicitly first
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+      .then(() => {
+        // Create a small delay to ensure the div is rendered
+        setTimeout(() => {
+          const html5QrCode = new Html5Qrcode(scannerDivId);
+          scannerRef.current = html5QrCode;
+          
+          html5QrCode.start(
+            { facingMode: "environment" },
+            {
+              fps: 10,
+              qrbox: { width: 250, height: 250 },
+            },
+            onScanSuccess,
+            onScanFailure
+          ).catch((err) => {
+            console.error("Failed to start scanner:", err);
+            setError("Failed to start camera. Please check permissions.");
+            setScanning(false);
+          });
+        }, 500);
+      })
+      .catch(err => {
+        console.error("Camera permission denied:", err);
+        setError("Camera access denied. Please enable camera permissions in your browser settings.");
         setScanning(false);
       });
-    }, 500);
   };
 
   const stopScanner = () => {
