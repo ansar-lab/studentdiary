@@ -48,7 +48,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               size="lg"
-              className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all text-lg"
+              className="bg-gradient-to-r from-secondary to-secondary/90 hover:from-secondary/90 hover:to-secondary shadow-lg hover:shadow-xl transition-all text-lg"
               onClick={() => navigate("/auth")}
             >
               Get Started
@@ -72,7 +72,7 @@ const Index = () => {
         </h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {/* Student Features */}
-          <Card className="border-border/50 shadow-lg hover:shadow-xl transition-all">
+          <Card className="bg-card text-card-foreground border-border/50 shadow-lg hover:shadow-xl transition-all">
             <CardHeader>
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                 <BookOpen className="w-6 h-6 text-primary" />
@@ -84,7 +84,7 @@ const Index = () => {
             </CardHeader>
           </Card>
 
-          <Card className="border-border/50 shadow-lg hover:shadow-xl transition-all">
+          <Card className="bg-card text-card-foreground border-border/50 shadow-lg hover:shadow-xl transition-all">
             <CardHeader>
               <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mb-4">
                 <Calendar className="w-6 h-6 text-accent" />
@@ -96,7 +96,7 @@ const Index = () => {
             </CardHeader>
           </Card>
 
-          <Card className="border-border/50 shadow-lg hover:shadow-xl transition-all">
+          <Card className="bg-card text-card-foreground border-border/50 shadow-lg hover:shadow-xl transition-all">
             <CardHeader>
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                 <Lightbulb className="w-6 h-6 text-primary" />
@@ -109,7 +109,7 @@ const Index = () => {
           </Card>
 
           {/* Faculty Features */}
-          <Card className="border-border/50 shadow-lg hover:shadow-xl transition-all">
+          <Card className="bg-card text-card-foreground border-border/50 shadow-lg hover:shadow-xl transition-all">
             <CardHeader>
               <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mb-4">
                 <QrCode className="w-6 h-6 text-accent" />
@@ -121,7 +121,7 @@ const Index = () => {
             </CardHeader>
           </Card>
 
-          <Card className="border-border/50 shadow-lg hover:shadow-xl transition-all">
+          <Card className="bg-card text-card-foreground border-border/50 shadow-lg hover:shadow-xl transition-all">
             <CardHeader>
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                 <Users className="w-6 h-6 text-primary" />
@@ -133,7 +133,7 @@ const Index = () => {
             </CardHeader>
           </Card>
 
-          <Card className="border-border/50 shadow-lg hover:shadow-xl transition-all">
+          <Card className="bg-card text-card-foreground border-border/50 shadow-lg hover:shadow-xl transition-all">
             <CardHeader>
               <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mb-4">
                 <GraduationCap className="w-6 h-6 text-accent" />
@@ -149,7 +149,7 @@ const Index = () => {
 
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-16 md:py-24">
-        <Card className="max-w-4xl mx-auto bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20 shadow-2xl">
+        <Card className="bg-card text-card-foreground max-w-4xl mx-auto border-border shadow-2xl">
           <CardHeader className="text-center">
             <CardTitle className="text-3xl md:text-4xl font-heading mb-4">
               Ready to Transform Your Academic Experience?
@@ -161,7 +161,7 @@ const Index = () => {
           <CardContent className="flex justify-center">
             <Button
               size="lg"
-              className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg hover:shadow-xl transition-all text-lg"
+              className="bg-gradient-to-r from-secondary to-secondary/90 hover:from-secondary/90 hover:to-secondary shadow-lg hover:shadow-xl transition-all text-lg"
               onClick={() => navigate("/auth")}
             >
               Get Started Now

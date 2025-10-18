@@ -2,105 +2,135 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .glass {
+    background: var(--glass-background) !important;
+    backdrop-filter: var(--glass-blur) !important;
+    -webkit-backdrop-filter: var(--glass-blur) !important;
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: var(--glass-shadow) !important;
+  }
+  
+  .glass-card {
+    background: var(--glass-card) !important;
+    backdrop-filter: var(--glass-blur) !important;
+    -webkit-backdrop-filter: var(--glass-blur) !important;
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: var(--glass-shadow) !important;
+  }
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    --background: 43 55% 95%; /* #FBF7EB - Very light beige */
-    --foreground: 38 14% 28%;
+    /* Background (Cream White) - 95% */
+    --background: 32 61% 95%; /* Main background - cream white */
+    --foreground: 17 100% 20%; /* Text color - dark coral peach */
 
-    --card: 44 67% 95%; /* #FAF6EA - Creamy beige */
-    --card-foreground: 38 14% 28%;
+    --card: 32 61% 92%; /* Card background - lighter cream white */
+    --card-foreground: 17 100% 20%; /* Card text - dark coral peach */
 
-    --popover: 48 75% 95%; /* #FCF9EA - Pale ivory */
-    --popover-foreground: 38 14% 28%;
+    --popover: 32 61% 92%; /* Popover background - cream white */
+    --popover-foreground: 17 100% 20%; /* Popover text - dark coral peach */
 
-    --primary: 38 14% 28%;
-    --primary-foreground: 43 55% 95%; /* #FBF7EB */
+    /* Text (Headings, Body) - 20% */
+    --primary: 17 100% 76%; /* Primary text color - coral peach */
+    --primary-foreground: 0 0% 100%; /* Text on primary buttons - white */
 
-    --secondary: 39 57% 93%; /* #FAF3E3 - Soft sand beige */
-    --secondary-foreground: 38 14% 28%;
+    /* Accents (Buttons, Highlights) - 89% */
+    --secondary: 28 91% 89%; /* Secondary elements - soft apricot */
+    --secondary-foreground: 17 100% 20%; /* Text on secondary elements - dark coral */
 
-    --muted: 37 50% 93%; /* #F9F1E4 - Muted cream */
-    --muted-foreground: 38 14% 40%;
+    --accent: 195 66% 66%; /* Accent elements - sky blue */
+    --accent-foreground: 0 0% 100%; /* Text on accent elements - white */
 
-    --accent: 39 57% 93%; /* #FAF3E3 */
-    --accent-foreground: 38 14% 28%;
+    --muted: 28 91% 89%; /* Muted elements - soft apricot */
+    --muted-foreground: 17 100% 30%; /* Muted text - medium coral */
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 70% 50%; /* Keep destructive red */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 39 57% 93%; /* #FAF3E3 */
-    --input: 39 57% 93%; /* #FAF3E3 */
-    --ring: 38 14% 28%;
+    /* Borders / Light UI elements - 90% */
+    --border: 32 61% 90%; /* Border color - subtle cream white */
+    --input: 32 61% 90%; /* Input borders */
+    --ring: 195 66% 66%; /* Focus rings - sky blue */
 
     --radius: 0.75rem;
-    
+
     /* Custom tokens - solid colors only */
-    --primary-solid: hsl(38 14% 28%);
-    --accent-solid: hsl(43 55% 95%);
-    --shadow-card: 0 2px 8px -2px hsl(38 14% 28% / 0.1);
-    --shadow-card-hover: 0 8px 24px -8px hsl(38 14% 28% / 0.2);
+    --primary-solid: hsl(17 100% 76%);
+    --accent-solid: hsl(195 66% 66%);
+    --shadow-card: 0 2px 8px -2px hsl(17 100% 20% / 0.1);
+    --shadow-card-hover: 0 8px 24px -8px hsl(17 100% 20% / 0.2);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 42 50% 93%; /* #F6EFDF - Light warm neutral */
+    /* Glassmorphism effects */
+    --glass-background: rgba(250, 242, 232, 0.25); /* Cream White rgba */
+    --glass-border: rgba(250, 242, 232, 0.25);
+    --glass-shadow: 0 8px 32px 0 rgba(255, 168, 131, 0.15); /* Coral Peach shadow */
+    --glass-blur: blur(12px);
+    --glass-card: rgba(250, 242, 232, 0.35);
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-background: 32 61% 95%; /* Match main background */
 
-    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-foreground: 17 100% 20%; /* Match text color */
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-primary: 17 100% 76%; /* Match primary */
 
-    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-primary-foreground: 0 0% 100%; /* Match primary-foreground */
 
-    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-accent: 195 66% 66%; /* Match accent */
 
-    --sidebar-border: 220 13% 91%;
+    --sidebar-accent-foreground: 0 0% 100%; /* Match accent-foreground */
 
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-border: 32 61% 90%; /* Match border */
+
+    --sidebar-ring: 195 66% 66%; /* Match accent */
   }
 
   .dark {
-    --background: 38 14% 20%;
-    --foreground: 276 47% 94%;
+    /* Background (Dark Cream White) - 20% */
+    --background: 32 61% 20%; /* Dark background - dark cream */
+    --foreground: 17 100% 90%; /* Light text - light coral peach */
 
-    --card: 38 14% 25%;
-    --card-foreground: 276 47% 94%;
+    --card: 32 61% 25%; /* Dark card background */
+    --card-foreground: 17 100% 90%; /* Light card text */
 
-    --popover: 38 14% 25%;
-    --popover-foreground: 276 47% 94%;
+    --popover: 32 61% 25%; /* Dark popover background */
+    --popover-foreground: 17 100% 90%; /* Light popover text */
 
-    --primary: 276 47% 94%;
-    --primary-foreground: 38 14% 28%;
+    --primary: 17 100% 90%; /* Light primary text */
+    --primary-foreground: 32 61% 20%; /* Dark text on primary */
 
-    --secondary: 14 18% 50%;
-    --secondary-foreground: 276 47% 94%;
+    --secondary: 28 91% 50%; /* Medium secondary */
+    --secondary-foreground: 17 100% 90%; /* Light text on secondary */
 
-    --muted: 38 14% 35%;
-    --muted-foreground: 222 18% 75%;
+    --accent: 195 66% 80%; /* Light accent */
+    --accent-foreground: 32 61% 20%; /* Dark text on accent */
 
-    --accent: 276 47% 80%;
-    --accent-foreground: 38 14% 28%;
+    --muted: 32 61% 35%; /* Dark muted */
+    --muted-foreground: 17 100% 75%; /* Medium light muted text */
 
-    --destructive: 0 62.8% 50%;
-    --destructive-foreground: 276 47% 94%;
+    --destructive: 0 62.8% 50%; /* Keep destructive red */
+    --destructive-foreground: 17 100% 90%;
 
-    --border: 38 14% 35%;
-    --input: 38 14% 35%;
-    --ring: 276 47% 94%;
-    
-    --shadow-card: 0 2px 8px -2px hsl(276 47% 94% / 0.3);
-    --shadow-card-hover: 0 8px 24px -8px hsl(276 47% 94% / 0.4);
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 32 61% 35%; /* Dark border */
+    --input: 32 61% 35%; /* Dark input */
+    --ring: 195 66% 80%; /* Light ring */
+
+    --shadow-card: 0 2px 8px -2px hsl(17 100% 90% / 0.3);
+    --shadow-card-hover: 0 8px 24px -8px hsl(17 100% 90% / 0.4);
+    --sidebar-background: 32 61% 20%; /* Match main background */
+    --sidebar-foreground: 17 100% 90%; /* Match text color */
+    --sidebar-primary: 17 100% 90%; /* Match primary */
+    --sidebar-primary-foreground: 32 61% 20%; /* Match primary-foreground */
+    --sidebar-accent: 195 66% 80%; /* Match accent */
+    --sidebar-accent-foreground: 32 61% 20%; /* Match accent-foreground */
+    --sidebar-border: 32 61% 35%; /* Match border */
+    --sidebar-ring: 195 66% 80%; /* Match accent */
   }
 }
 
