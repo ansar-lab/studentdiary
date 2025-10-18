@@ -8,44 +8,44 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 276 47% 94%;
+    --background: 43 55% 95%; /* #FBF7EB - Very light beige */
     --foreground: 38 14% 28%;
 
-    --card: 0 0% 100%;
+    --card: 44 67% 95%; /* #FAF6EA - Creamy beige */
     --card-foreground: 38 14% 28%;
 
-    --popover: 0 0% 100%;
+    --popover: 48 75% 95%; /* #FCF9EA - Pale ivory */
     --popover-foreground: 38 14% 28%;
 
     --primary: 38 14% 28%;
-    --primary-foreground: 276 47% 94%;
+    --primary-foreground: 43 55% 95%; /* #FBF7EB */
 
-    --secondary: 14 18% 70%;
+    --secondary: 39 57% 93%; /* #FAF3E3 - Soft sand beige */
     --secondary-foreground: 38 14% 28%;
 
-    --muted: 222 18% 87%;
+    --muted: 37 50% 93%; /* #F9F1E4 - Muted cream */
     --muted-foreground: 38 14% 40%;
 
-    --accent: 276 47% 94%;
+    --accent: 39 57% 93%; /* #FAF3E3 */
     --accent-foreground: 38 14% 28%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 18% 87%;
-    --input: 222 18% 87%;
+    --border: 39 57% 93%; /* #FAF3E3 */
+    --input: 39 57% 93%; /* #FAF3E3 */
     --ring: 38 14% 28%;
 
     --radius: 0.75rem;
     
-    /* Custom tokens */
-    --gradient-primary: linear-gradient(135deg, hsl(38 14% 28%), hsl(14 18% 70%));
-    --gradient-accent: linear-gradient(135deg, hsl(276 47% 94%), hsl(222 18% 87%));
+    /* Custom tokens - solid colors only */
+    --primary-solid: hsl(38 14% 28%);
+    --accent-solid: hsl(43 55% 95%);
     --shadow-card: 0 2px 8px -2px hsl(38 14% 28% / 0.1);
     --shadow-card-hover: 0 8px 24px -8px hsl(38 14% 28% / 0.2);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 42 50% 93%; /* #F6EFDF - Light warm neutral */
 
     --sidebar-foreground: 240 5.3% 26.1%;
 

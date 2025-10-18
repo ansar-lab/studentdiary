@@ -51,10 +51,10 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-4 shadow-lg">
             <GraduationCap className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-heading font-bold text-foreground">Student Diary</h1>
@@ -115,7 +115,7 @@ const Auth = () => {
               </div>
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all"
+                className="w-full bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all"
                 disabled={loading}
               >
                 {loading ? "Loading..." : isLogin ? "Sign In" : "Create Account"}

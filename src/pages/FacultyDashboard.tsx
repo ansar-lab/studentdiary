@@ -59,12 +59,12 @@ const FacultyDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-accent/5 via-background to-primary/5">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-accent to-accent/80 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -87,7 +87,7 @@ const FacultyDashboard = () => {
       <main className="container mx-auto px-4 py-8 pb-24">
         {/* Profile Card */}
         <Card className="mb-8 border-border/50 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-accent/10 to-primary/10 rounded-t-lg">
+          <CardHeader className="bg-accent/10 rounded-t-lg">
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-2xl">{profile?.full_name}</CardTitle>
@@ -95,7 +95,7 @@ const FacultyDashboard = () => {
                   Faculty • {profile?.department}
                 </CardDescription>
               </div>
-              <div className="w-16 h-16 bg-gradient-to-br from-accent to-primary rounded-full flex items-center justify-center text-2xl text-white font-bold">
+              <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center text-2xl text-white font-bold">
                 {profile?.full_name?.charAt(0)}
               </div>
             </div>
