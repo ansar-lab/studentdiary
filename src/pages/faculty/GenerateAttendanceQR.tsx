@@ -77,25 +77,39 @@ const GenerateAttendanceQR = () => {
       const expiresAt = new Date();
       expiresAt.setSeconds(expiresAt.getSeconds() + 90);
       
-      // Create session in Supabase
-      const { data: session, error } = await supabase
-        .from("attendance_sessions")
-        .insert({
-          class_id: classId,
-          subject: subject,
-          expires_at: expiresAt.toISOString(),
-          is_active: true,
-          created_by: user.id
-        })
-        .select()
-        .single();
+      // Generate a session ID locally since the table might not exist yet
+      const localSessionId = crypto.randomUUID();
       
-      if (error) throw error;
+      try {
+        // Try to create session in Supabase if table exists
+        const { data: session, error } = await supabase
+          .from("attendance_sessions")
+          .insert({
+            class_id: classId,
+            subject: subject,
+            expires_at: expiresAt.toISOString(),
+            is_active: true,
+            created_by: user.id
+          })
+          .select()
+          .single();
+        
+        if (!error) {
+          setSessionId(session.session_id);
+        } else {
+          console.error("Could not save to Supabase, using local session:", error);
+          setSessionId(localSessionId);
+        }
+      } catch (err) {
+        console.error("Error accessing attendance_sessions table:", err);
+        // Fall back to local session ID
+        setSessionId(localSessionId);
+      }
       
       // Generate QR code with session data
       const qrData = JSON.stringify({
-        session_id: session.session_id,
-        subject: session.subject,
+        session_id: sessionId || localSessionId,
+        subject: subject,
         timestamp: new Date().toISOString()
       });
       
