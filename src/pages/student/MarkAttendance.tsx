@@ -51,25 +51,34 @@ const MarkAttendance = () => {
     setVerificationStep('qr');
     setError(null);
     
-    // Create a small delay to ensure the div is rendered
-    setTimeout(() => {
-      const html5QrCode = new Html5Qrcode(scannerDivId);
-      scannerRef.current = html5QrCode;
-      
-      html5QrCode.start(
-        { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
-        onScanSuccess,
-        onScanFailure
-      ).catch((err) => {
-        console.error("Failed to start scanner:", err);
-        setError("Failed to start camera. Please check permissions.");
+    // Request camera permission explicitly
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(() => {
+        // Create a small delay to ensure the div is rendered
+        setTimeout(() => {
+          const html5QrCode = new Html5Qrcode(scannerDivId);
+          scannerRef.current = html5QrCode;
+          
+          html5QrCode.start(
+            { facingMode: "environment" },
+            {
+              fps: 10,
+              qrbox: { width: 250, height: 250 },
+            },
+            onScanSuccess,
+            onScanFailure
+          ).catch((err) => {
+            console.error("Failed to start scanner:", err);
+            setError("Failed to start camera. Please check permissions.");
+            setScanning(false);
+          });
+        }, 500);
+      })
+      .catch(err => {
+        console.error("Camera permission denied:", err);
+        setError("Camera permission denied. Please allow camera access to scan QR codes.");
         setScanning(false);
       });
-    }, 500);
   };
 
   const stopScanner = () => {
@@ -171,16 +180,34 @@ const MarkAttendance = () => {
     try {
       setProcessing(true);
       
-      // In a real implementation, you would:
-      // 1. Request challenge from your server
-      // 2. Use startAuthentication with the challenge
-      // 3. Verify the authentication on your server
+      // Show a prompt to the user about biometric verification
+      toast.info("Requesting biometric verification...");
       
-      // For demo purposes, we'll simulate a successful authentication
-      // In production, use actual WebAuthn flow
-      
-      // Simulate biometric verification
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      try {
+        // Attempt to use WebAuthn for biometric authentication
+        // This is a simplified implementation - in production you would:
+        // 1. Get a challenge from your server
+        // 2. Use that challenge with startAuthentication
+        
+        // For demo purposes, we'll create a mock challenge
+        const mockChallenge = {
+          challenge: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]),
+          timeout: 60000,
+          rpId: window.location.hostname,
+          allowCredentials: [],
+          userVerification: 'preferred' as UserVerificationRequirement
+        };
+        
+        // This will trigger the browser's biometric prompt (fingerprint, face ID, etc.)
+        await startAuthentication(mockChallenge);
+        
+        // If we get here, authentication was successful
+        toast.success("Biometric verification successful!");
+      } catch (bioError) {
+        console.error("WebAuthn error:", bioError);
+        // For demo purposes, we'll continue even if biometric fails
+        toast.warning("Biometric verification skipped for demo");
+      }
       
       // Move to location verification
       setVerificationStep('location');
