@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, QrCode, Upload, Calendar, LogOut, User, Users } from "lucide-react";
+import { BookOpen, QrCode, Upload, Calendar, LogOut, User, Users, QrCodeIcon } from "lucide-react";
 import { toast } from "sonner";
 
 const FacultyDashboard = () => {
@@ -162,7 +162,10 @@ const FacultyDashboard = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <Button className="w-full bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent">
+              <Button 
+                onClick={() => navigate("/faculty/generate-attendance-qr")} 
+                className="w-full bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent"
+              >
                 Generate Now
               </Button>
             </CardContent>

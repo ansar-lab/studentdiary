@@ -14,6 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance_sessions: {
+        Row: {
+          session_id: string
+          class_id: string
+          subject: string
+          created_at: string
+          expires_at: string
+          is_active: boolean
+          created_by: string | null
+        }
+        Insert: {
+          session_id?: string
+          class_id: string
+          subject: string
+          created_at?: string
+          expires_at: string
+          is_active?: boolean
+          created_by?: string | null
+        }
+        Update: {
+          session_id?: string
+          class_id?: string
+          subject?: string
+          created_at?: string
+          expires_at?: string
+          is_active?: boolean
+          created_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_sessions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      attendance_records: {
+        Row: {
+          record_id: string
+          student_id: string | null
+          session_id: string | null
+          subject: string
+          scan_time: string
+          location_lat: number | null
+          location_long: number | null
+          biometric_verified: boolean
+          status: string
+        }
+        Insert: {
+          record_id?: string
+          student_id?: string | null
+          session_id?: string | null
+          subject: string
+          scan_time?: string
+          location_lat?: number | null
+          location_long?: number | null
+          biometric_verified?: boolean
+          status?: string
+        }
+        Update: {
+          record_id?: string
+          student_id?: string | null
+          session_id?: string | null
+          subject?: string
+          scan_time?: string
+          location_lat?: number | null
+          location_long?: number | null
+          biometric_verified?: boolean
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_sessions"
+            referencedColumns: ["session_id"]
+          }
+        ]
+      }
       attendance: {
         Row: {
           created_at: string | null

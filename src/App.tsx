@@ -14,6 +14,8 @@ import Profile from "./pages/student/Profile";
 import Attendance from "./pages/student/Attendance";
 import Timetable from "./pages/student/Timetable";
 import FacultyProfile from "./pages/faculty/Profile";
+import GenerateAttendanceQR from "./pages/faculty/GenerateAttendanceQR";
+import MarkAttendance from "./pages/student/MarkAttendance";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,8 @@ const App = () => (
           <Route path="/student/timetable" element={<Timetable />} />
           <Route path="/faculty" element={<FacultyDashboard />} />
           <Route path="/faculty/profile" element={<FacultyProfile />} />
+          <Route path="/faculty/generate-attendance-qr" element={<GenerateAttendanceQR />} />
+          <Route path="/student/mark-attendance" element={<MarkAttendance />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

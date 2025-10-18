@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, GraduationCap, BookOpen, Lightbulb, LogOut, User, Clock } from "lucide-react";
+import { Calendar, GraduationCap, BookOpen, Lightbulb, LogOut, User, Clock, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
 
@@ -153,6 +153,29 @@ const StudentDashboard = () => {
 
         {/* Dashboard Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {/* Mark Attendance Card */}
+          <Card 
+            className="border-primary/50 shadow-xl hover:shadow-2xl transition-all cursor-pointer group"
+            onClick={() => navigate("/student/mark-attendance")}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <QrCode className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">Mark Attendance</CardTitle>
+                  <CardDescription>Scan QR code to mark your attendance</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90">
+                Scan Now
+              </Button>
+            </CardContent>
+          </Card>
+          
           {/* Attendance Card */}
           <Card 
             className="border-border/50 shadow-md hover:shadow-xl transition-all cursor-pointer group"
