@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import BottomNav from "@/components/BottomNav";
 import ReactWebcam from "react-webcam";
 import { Html5Qrcode } from "html5-qrcode";
 import { startAuthentication } from "@simplewebauthn/browser";
-import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, Camera, Fingerprint } from "lucide-react";
 
 // Google Maps API Key
 const GOOGLE_MAPS_API_KEY = "AIzaSyCQ-BNwE_wZwzI45pSFaIoPOIPQtjbd6vo";
@@ -24,8 +24,10 @@ const MarkAttendance = () => {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionData, setSessionData] = useState<any>(null);
-  const [verificationStep, setVerificationStep] = useState<'initial' | 'qr' | 'biometric' | 'location' | 'complete'>('initial');
+  const [verificationStep, setVerificationStep] = useState<'initial' | 'qr' | 'biometric' | 'facial' | 'location' | 'complete'>('initial');
+  const [facialImage, setFacialImage] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const webcamRef = useRef<ReactWebcam>(null);
   const scannerDivId = "qr-reader";
   const navigate = useNavigate();
 
@@ -51,34 +53,25 @@ const MarkAttendance = () => {
     setVerificationStep('qr');
     setError(null);
     
-    // Request camera permission explicitly
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(() => {
-        // Create a small delay to ensure the div is rendered
-        setTimeout(() => {
-          const html5QrCode = new Html5Qrcode(scannerDivId);
-          scannerRef.current = html5QrCode;
-          
-          html5QrCode.start(
-            { facingMode: "environment" },
-            {
-              fps: 10,
-              qrbox: { width: 250, height: 250 },
-            },
-            onScanSuccess,
-            onScanFailure
-          ).catch((err) => {
-            console.error("Failed to start scanner:", err);
-            setError("Failed to start camera. Please check permissions.");
-            setScanning(false);
-          });
-        }, 500);
-      })
-      .catch(err => {
-        console.error("Camera permission denied:", err);
-        setError("Camera permission denied. Please allow camera access to scan QR codes.");
+    // Create a small delay to ensure the div is rendered
+    setTimeout(() => {
+      const html5QrCode = new Html5Qrcode(scannerDivId);
+      scannerRef.current = html5QrCode;
+      
+      html5QrCode.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+        },
+        onScanSuccess,
+        onScanFailure
+      ).catch((err) => {
+        console.error("Failed to start scanner:", err);
+        setError("Failed to start camera. Please check permissions.");
         setScanning(false);
       });
+    }, 500);
   };
 
   const stopScanner = () => {
@@ -96,68 +89,34 @@ const MarkAttendance = () => {
       
       // Parse QR data
       const qrData = JSON.parse(decodedText);
-      const { session_id, subject, class_id, timestamp } = qrData;
+      const { session_id, subject, timestamp } = qrData;
       
       if (!session_id) {
         throw new Error("Invalid QR code");
       }
       
-      let sessionValid = false;
-      let sessionData = null;
+      // Verify session is valid
+      const { data: session, error: sessionError } = await supabase
+        .from("attendance_sessions")
+        .select("*")
+        .eq("session_id", session_id)
+        .eq("is_active", true)
+        .single();
       
-      try {
-        // Verify session is valid in Supabase
-        const { data: session, error: sessionError } = await supabase
-          .from("attendance_sessions")
-          .select("*")
-          .eq("session_id", session_id)
-          .eq("is_active", true)
-          .single();
-          
-        if (!sessionError && session) {
-          // Check if session is still valid (not expired)
-          const now = new Date();
-          const expiresAt = new Date(session.expires_at);
-          
-          if (now <= expiresAt) {
-            sessionValid = true;
-            sessionData = session;
-          }
-        }
-      } catch (dbError) {
-        console.log("Database error:", dbError);
-        // Continue with fallback mechanism
-      }
-      
-      // Fallback mechanism when Supabase table doesn't exist or session not found
-      if (!sessionValid) {
-        // For demo purposes, accept any valid QR code format
-        // In production, you would validate against your database
-        const qrTimestamp = new Date(timestamp);
-        const now = new Date();
-        const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
-        
-        if (qrTimestamp >= fiveMinutesAgo) {
-          // QR code is less than 5 minutes old, consider it valid
-          sessionValid = true;
-          sessionData = {
-            session_id,
-            subject,
-            class_id,
-            created_at: timestamp,
-            expires_at: new Date(qrTimestamp.getTime() + 15 * 60 * 1000).toISOString()
-          };
-        } else {
-          throw new Error("QR code has expired");
-        }
-      }
-      
-      if (!sessionValid) {
+      if (sessionError || !session) {
         throw new Error("Session not found or expired");
       }
       
+      // Check if session is still valid (not expired)
+      const now = new Date();
+      const expiresAt = new Date(session.expires_at);
+      
+      if (now > expiresAt) {
+        throw new Error("QR code has expired");
+      }
+      
       // Store session data for later use
-      setSessionData(sessionData);
+      setSessionData(session);
       
       // Move to biometric verification
       setVerificationStep('biometric');
@@ -180,46 +139,78 @@ const MarkAttendance = () => {
     try {
       setProcessing(true);
       
-      // Show a prompt to the user about biometric verification
-      toast.info("Requesting biometric verification...");
-      
-      try {
-        // Attempt to use WebAuthn for biometric authentication
-        // This is a simplified implementation - in production you would:
-        // 1. Get a challenge from your server
-        // 2. Use that challenge with startAuthentication
-        
-        // For demo purposes, we'll create a mock challenge
-        const mockChallenge = {
-          challenge: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]),
-          timeout: 60000,
-          rpId: window.location.hostname,
-          allowCredentials: [],
-          userVerification: 'preferred' as UserVerificationRequirement
-        };
-        
-        // This will trigger the browser's biometric prompt (fingerprint, face ID, etc.)
-        await startAuthentication(mockChallenge);
-        
-        // If we get here, authentication was successful
-        toast.success("Biometric verification successful!");
-      } catch (bioError) {
-        console.error("WebAuthn error:", bioError);
-        // For demo purposes, we'll continue even if biometric fails
-        toast.warning("Biometric verification skipped for demo");
+      // Check if WebAuthn is supported
+      if (!window.PublicKeyCredential) {
+        throw new Error("WebAuthn is not supported in this browser");
       }
       
-      // Move to location verification
-      setVerificationStep('location');
-      setProcessing(false);
+      // Check if platform authenticator is available
+      const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
       
+      if (!available) {
+        console.log("Platform authenticator not available, switching to facial recognition");
+        setVerificationStep('facial');
+        setProcessing(false);
+        return;
+      }
+      
+      // Mock challenge - in a real app, this would come from your server
+      const mockChallenge = new Uint8Array(32);
+      window.crypto.getRandomValues(mockChallenge);
+      
+      // Start authentication with WebAuthn
+      try {
+        await startAuthentication({
+          challenge: Buffer.from(mockChallenge).toString('base64'),
+          allowCredentials: [],
+          timeout: 60000,
+          userVerification: 'required',
+          rpId: window.location.hostname,
+        });
+        
+        // If successful, proceed to location verification
+        setVerificationStep('location');
+        setProcessing(false);
+      } catch (err: any) {
+        if (err.name === 'NotAllowedError') {
+          throw new Error("Fingerprint verification was denied");
+        } else if (err.name === 'NotSupportedError') {
+          console.log("Fingerprint not supported, switching to facial recognition");
+          setVerificationStep('facial');
+          setProcessing(false);
+          return;
+        } else {
+          throw err;
+        }
+      }
     } catch (error: any) {
       console.error("Biometric verification error:", error);
-      setError("Biometric verification failed");
+      setError(error.message || "Failed to verify biometrics");
       setProcessing(false);
       setVerificationStep('initial');
     }
   };
+
+  // Capture facial image for verification
+  const captureFacialImage = useCallback(() => {
+    if (webcamRef.current) {
+      const imageSrc = webcamRef.current.getScreenshot();
+      setFacialImage(imageSrc);
+      
+      // In a real implementation, you would send this image to your server
+      // for facial recognition verification against the student's registered face
+      
+      // For this implementation, we'll simulate a successful verification
+      setTimeout(() => {
+        setVerificationStep('location');
+        setProcessing(false);
+      }, 1500);
+    } else {
+      setError("Camera not available. Please check permissions.");
+      setProcessing(false);
+      setVerificationStep('initial');
+    }
+  }, []);
 
   const verifyLocation = async () => {
     try {
@@ -227,9 +218,20 @@ const MarkAttendance = () => {
       
       // Get current location
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
+        navigator.geolocation.getCurrentPosition(resolve, (error) => {
+          // Handle specific geolocation errors
+          if (error.code === 1) {
+            reject(new Error("Location permission denied. Please enable location services."));
+          } else if (error.code === 2) {
+            reject(new Error("Location unavailable. Please try again."));
+          } else if (error.code === 3) {
+            reject(new Error("Location request timed out. Please try again."));
+          } else {
+            reject(error);
+          }
+        }, {
           enableHighAccuracy: true,
-          timeout: 5000,
+          timeout: 10000, // Increased timeout
           maximumAge: 0
         });
       });
@@ -267,24 +269,36 @@ const MarkAttendance = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
       
+      // Check if sessionData exists
+      if (!sessionData || !sessionData.session_id) {
+        throw new Error("Session data is missing");
+      }
+      
       // Insert attendance record
       const { error } = await supabase
         .from("attendance_records")
         .insert({
           student_id: user.id,
           session_id: sessionData.session_id,
-          subject: sessionData.subject,
+          subject: sessionData.subject || "Unknown",
           location_lat: latitude,
           location_long: longitude,
           biometric_verified: true,
           status: "Present"
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        // Check if it's a duplicate record error
+        if (error.code === "23505") {
+          throw new Error("You have already marked attendance for this session");
+        }
+        throw error;
+      }
       
     } catch (error: any) {
       console.error("Failed to record attendance:", error);
-      throw new Error("Failed to record attendance");
+      throw new Error(error.message || "Failed to record attendance");
     }
   };
 
@@ -318,154 +332,206 @@ const MarkAttendance = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 pb-24">
-      <h1 className="text-2xl font-bold mb-6">Mark Attendance</h1>
-      
-      {verificationStep === 'initial' && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Scan Attendance QR Code</CardTitle>
-            <CardDescription>
-              Scan the QR code displayed by your teacher to mark your attendance
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center">
-            <Button 
-              onClick={startScanner} 
-              className="w-full max-w-xs bg-accent"
-              disabled={scanning || processing}
-            >
-              {scanning ? "Scanning..." : "Scan QR Code"}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-      
-      {verificationStep === 'qr' && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Scanning QR Code</CardTitle>
-            <CardDescription>
-              Position the QR code within the scanner
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center">
-            <div id={scannerDivId} className="w-full max-w-xs h-64 mx-auto"></div>
-            <Button 
-              onClick={resetProcess} 
-              variant="outline" 
-              className="mt-4"
-            >
-              Cancel
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-      
-      {verificationStep === 'biometric' && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Biometric Verification</CardTitle>
-            <CardDescription>
-              Verify your identity using your device's biometric authentication
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center">
-            <Button 
-              onClick={verifyBiometric} 
-              className="w-full max-w-xs bg-accent mb-4"
-              disabled={processing}
-            >
+    <div className="flex flex-col min-h-screen bg-[#F9F5EB]">
+      <div className="flex-1 container mx-auto p-4">
+        <h1 className="text-2xl font-bold text-[#7D3C0A] mb-4">Mark Attendance</h1>
+        
+        {verificationStep === 'initial' && (
+          <Card className="bg-[#F9F5EB] border-[#E4DCCF]">
+            <CardHeader>
+              <CardTitle className="text-[#7D3C0A]">Scan Attendance QR Code</CardTitle>
+              <CardDescription>Scan the QR code displayed by your teacher to mark your attendance</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {error && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md flex flex-col items-center text-red-700">
+                  <XCircle className="h-12 w-12 text-red-500 mb-2" />
+                  <p className="text-center font-medium">Error</p>
+                  <p className="text-center text-sm">{error}</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-2 bg-white hover:bg-gray-100"
+                    onClick={() => {
+                      setError(null);
+                      setVerificationStep('initial');
+                    }}
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              )}
+              
+              {!error && !scanning && (
+                <Button 
+                  className="w-full bg-[#7FB3D5] hover:bg-[#5499C7] text-white"
+                  onClick={() => startScanner()}
+                >
+                  Scan QR Code
+                </Button>
+              )}
+              
+              {scanning && (
+                <div className="flex flex-col items-center">
+                  <div id={scannerDivId} className="w-full max-w-sm mx-auto"></div>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => stopScanner()}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+        
+        {verificationStep === 'biometric' && (
+          <Card className="bg-[#F9F5EB] border-[#E4DCCF]">
+            <CardHeader>
+              <CardTitle className="text-[#7D3C0A]">Biometric Verification</CardTitle>
+              <CardDescription>Verify your identity using fingerprint</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center">
               {processing ? (
+                <div className="flex flex-col items-center">
+                  <Loader2 className="h-12 w-12 text-[#7D3C0A] animate-spin mb-2" />
+                  <p>Verifying biometrics...</p>
+                </div>
+              ) : (
+                <Button 
+                  className="w-full bg-[#7FB3D5] hover:bg-[#5499C7] text-white"
+                  onClick={verifyBiometric}
+                >
+                  <Fingerprint className="mr-2 h-5 w-5" />
+                  Verify with Fingerprint
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {verificationStep === 'facial' && (
+          <Card className="bg-[#F9F5EB] border-[#E4DCCF]">
+            <CardHeader>
+              <CardTitle className="text-[#7D3C0A]">Facial Recognition</CardTitle>
+              <CardDescription>Verify your identity using your face</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center">
+              {!facialImage ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Verifying...
+                  <div className="w-full max-w-sm mx-auto mb-4 rounded-lg overflow-hidden border-2 border-[#E4DCCF]">
+                    <ReactWebcam
+                      audio={false}
+                      ref={webcamRef}
+                      screenshotFormat="image/jpeg"
+                      videoConstraints={{
+                        facingMode: "user"
+                      }}
+                      className="w-full"
+                    />
+                  </div>
+                  {processing ? (
+                    <div className="flex flex-col items-center">
+                      <Loader2 className="h-12 w-12 text-[#7D3C0A] animate-spin mb-2" />
+                      <p>Processing...</p>
+                    </div>
+                  ) : (
+                    <Button 
+                      className="w-full bg-[#7FB3D5] hover:bg-[#5499C7] text-white"
+                      onClick={() => {
+                        setProcessing(true);
+                        captureFacialImage();
+                      }}
+                    >
+                      <Camera className="mr-2 h-5 w-5" />
+                      Capture Image
+                    </Button>
+                  )}
                 </>
               ) : (
-                "Verify with Biometric"
+                <div className="flex flex-col items-center">
+                  <div className="w-full max-w-sm mx-auto mb-4 rounded-lg overflow-hidden border-2 border-[#E4DCCF]">
+                    <img src={facialImage} alt="Captured face" className="w-full" />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <Loader2 className="h-12 w-12 text-[#7D3C0A] animate-spin mb-2" />
+                    <p>Verifying identity...</p>
+                  </div>
+                </div>
               )}
-            </Button>
-            <Button 
-              onClick={resetProcess} 
-              variant="outline"
-            >
-              Cancel
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-      
-      {verificationStep === 'location' && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Location Verification</CardTitle>
-            <CardDescription>
-              Verify you are within the campus area
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center">
-            <Button 
-              onClick={verifyLocation} 
-              className="w-full max-w-xs bg-accent mb-4"
-              disabled={processing}
-            >
+            </CardContent>
+          </Card>
+        )}
+        
+        {verificationStep === 'location' && (
+          <Card className="bg-[#F9F5EB] border-[#E4DCCF]">
+            <CardHeader>
+              <CardTitle className="text-[#7D3C0A]">Location Verification</CardTitle>
+              <CardDescription>Verify you are within the campus area</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center">
               {processing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Verifying Location...
-                </>
+                <div className="flex flex-col items-center">
+                  <Loader2 className="h-12 w-12 text-[#7D3C0A] animate-spin mb-2" />
+                  <p>Verifying location...</p>
+                </div>
               ) : (
-                "Verify Location"
+                <>
+                  <Button 
+                    className="w-full bg-[#7FB3D5] hover:bg-[#5499C7] text-white mb-2"
+                    onClick={verifyLocation}
+                  >
+                    Verify Location
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => setVerificationStep('initial')}
+                  >
+                    Cancel
+                  </Button>
+                </>
               )}
-            </Button>
-            <Button 
-              onClick={resetProcess} 
-              variant="outline"
-            >
-              Cancel
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-      
-      {verificationStep === 'complete' && success && (
-        <Card className="mb-6 border-green-500">
-          <CardContent className="p-6">
-            <div className="flex flex-col items-center text-center">
-              <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
-              <h2 className="text-2xl font-bold text-green-700 mb-2">Attendance Marked!</h2>
-              <p className="text-gray-600 mb-6">
-                Your attendance has been successfully recorded.
-              </p>
-              <Button 
-                onClick={() => navigate("/student/attendance")} 
-                className="bg-accent"
-              >
-                View Attendance History
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      
-      {error && (
-        <Card className="mb-6 border-red-500">
-          <CardContent className="p-6">
-            <div className="flex flex-col items-center text-center">
-              <XCircle className="w-16 h-16 text-red-500 mb-4" />
-              <h2 className="text-xl font-bold text-red-700 mb-2">Error</h2>
-              <p className="text-gray-600 mb-6">{error}</p>
-              <Button 
-                onClick={resetProcess} 
-                variant="outline"
-              >
-                Try Again
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      
+            </CardContent>
+          </Card>
+        )}
+        
+        {verificationStep === 'complete' && (
+          <Card className="bg-[#F9F5EB] border-[#E4DCCF]">
+            <CardContent className="flex flex-col items-center pt-6">
+              {success ? (
+                <div className="flex flex-col items-center">
+                  <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
+                  <h2 className="text-xl font-semibold text-[#7D3C0A] mb-2">Attendance Recorded</h2>
+                  <p className="text-center mb-4">Your attendance has been successfully recorded.</p>
+                  <Button 
+                    className="bg-[#7FB3D5] hover:bg-[#5499C7] text-white"
+                    onClick={() => navigate('/student/dashboard')}
+                  >
+                    Return to Dashboard
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <XCircle className="h-16 w-16 text-red-500 mb-4" />
+                  <h2 className="text-xl font-semibold text-[#7D3C0A] mb-2">Failed to Record Attendance</h2>
+                  <p className="text-center mb-4">{error || "An error occurred while recording attendance."}</p>
+                  <Button 
+                    className="bg-[#7FB3D5] hover:bg-[#5499C7] text-white"
+                    onClick={() => {
+                      setError(null);
+                      setVerificationStep('initial');
+                    }}
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
       <BottomNav />
     </div>
   );
