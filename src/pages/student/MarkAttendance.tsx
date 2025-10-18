@@ -58,23 +58,51 @@ const MarkAttendance = () => {
       .then(() => {
         // Create a small delay to ensure the div is rendered
         setTimeout(() => {
+          // Make sure the scanner div exists
+          const scannerDiv = document.getElementById(scannerDivId);
+          if (!scannerDiv) {
+            setError("Scanner initialization failed. Please try again.");
+            setScanning(false);
+            return;
+          }
+          
+          // Clear any previous content
+          scannerDiv.innerHTML = '';
+          
           const html5QrCode = new Html5Qrcode(scannerDivId);
           scannerRef.current = html5QrCode;
           
-          html5QrCode.start(
-            { facingMode: "environment" },
-            {
-              fps: 10,
-              qrbox: { width: 250, height: 250 },
-            },
-            onScanSuccess,
-            onScanFailure
-          ).catch((err) => {
+          // Get available cameras and use the back camera if available
+          Html5Qrcode.getCameras().then(devices => {
+            if (devices && devices.length) {
+              // Try to use the last camera (usually the back camera on mobile)
+              const cameraId = devices[devices.length - 1].id;
+              
+              html5QrCode.start(
+                cameraId,
+                {
+                  fps: 10,
+                  qrbox: { width: 250, height: 250 },
+                  aspectRatio: 1.0,
+                  showTorchButtonIfSupported: true,
+                },
+                onScanSuccess,
+                onScanFailure
+              ).catch((err) => {
             console.error("Failed to start scanner:", err);
-            setError("Failed to start camera. Please check permissions.");
+              setError("Failed to start camera. Please check permissions.");
+              setScanning(false);
+            });
+            } else {
+              setError("No cameras found on your device");
+              setScanning(false);
+            }
+          }).catch(err => {
+            console.error("Error getting cameras:", err);
+            setError("Failed to access camera list. Please check permissions.");
             setScanning(false);
           });
-        }, 500);
+        }, 1000); // Increased delay to ensure DOM is ready
       })
       .catch(err => {
         console.error("Camera permission denied:", err);
@@ -381,7 +409,8 @@ const MarkAttendance = () => {
               
               {scanning && (
                 <div className="flex flex-col items-center">
-                  <div id={scannerDivId} className="w-full max-w-sm mx-auto"></div>
+                  <div id={scannerDivId} className="w-full max-w-sm mx-auto h-64 border border-gray-300 rounded-md overflow-hidden"></div>
+                  <p className="text-sm text-gray-600 mt-2">Position the QR code within the frame</p>
                   <Button 
                     variant="outline" 
                     className="mt-4"
