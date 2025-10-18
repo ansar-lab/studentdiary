@@ -5,15 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GraduationCap, LogOut, User, Mail, Hash, BookOpen, Building, Edit, Save, X } from "lucide-react";
+import { BookOpen, LogOut, User, Mail, Building, Edit, Save, X } from "lucide-react";
 import { toast } from "sonner";
-import BottomNav from "@/components/BottomNav";
 import { z } from "zod";
 
 const profileSchema = z.object({
   full_name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
-  roll_number: z.string().trim().min(1, "Roll number is required").max(50, "Roll number must be less than 50 characters"),
-  course: z.string().trim().min(1, "Course is required").max(100, "Course must be less than 100 characters"),
   department: z.string().trim().min(1, "Department is required").max(100, "Department must be less than 100 characters"),
 });
 
@@ -21,21 +18,17 @@ interface Profile {
   id: string;
   email: string;
   full_name: string;
-  roll_number: string;
-  course: string;
   department: string;
   role: string;
   created_at: string;
 }
 
-const Profile = () => {
+const FacultyProfile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     full_name: "",
-    roll_number: "",
-    course: "",
     department: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -63,8 +56,6 @@ const Profile = () => {
       setProfile(data);
       setEditForm({
         full_name: data.full_name || "",
-        roll_number: data.roll_number || "",
-        course: data.course || "",
         department: data.department || "",
       });
     } catch (error: any) {
@@ -85,8 +76,6 @@ const Profile = () => {
     if (profile) {
       setEditForm({
         full_name: profile.full_name || "",
-        roll_number: profile.roll_number || "",
-        course: profile.course || "",
         department: profile.department || "",
       });
     }
@@ -96,6 +85,7 @@ const Profile = () => {
     try {
       setErrors({});
       
+      // Validate form
       const validatedData = profileSchema.parse(editForm);
 
       const { data: { user } } = await supabase.auth.getUser();
@@ -105,8 +95,6 @@ const Profile = () => {
         .from("profiles")
         .update({
           full_name: validatedData.full_name,
-          roll_number: validatedData.roll_number,
-          course: validatedData.course,
           department: validatedData.department,
         })
         .eq("id", user.id);
@@ -157,12 +145,13 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-accent/5 via-background to-primary/5">
+      {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center">
-              <GraduationCap className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-br from-accent to-accent/80 rounded-lg flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-white" />
             </div>
             <div>
               <h1 className="text-xl font-heading font-bold">My Profile</h1>
@@ -182,12 +171,14 @@ const Profile = () => {
         </div>
       </header>
 
+      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+        {/* Profile Header Card */}
         <Card className="mb-6 border-border/50 shadow-lg overflow-hidden">
-          <div className="h-32 bg-gradient-to-r from-primary to-accent"></div>
+          <div className="h-32 bg-gradient-to-r from-accent to-primary"></div>
           <CardContent className="relative pt-0 pb-6">
             <div className="flex flex-col items-center -mt-16 mb-4">
-              <div className="w-32 h-32 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-5xl text-white font-bold border-4 border-card shadow-xl">
+              <div className="w-32 h-32 bg-gradient-to-br from-accent to-primary rounded-full flex items-center justify-center text-5xl text-white font-bold border-4 border-card shadow-xl">
                 {profile?.full_name?.charAt(0).toUpperCase()}
               </div>
               <h2 className="text-2xl font-heading font-bold mt-4">{profile?.full_name}</h2>
@@ -196,6 +187,7 @@ const Profile = () => {
           </CardContent>
         </Card>
 
+        {/* Profile Details */}
         <div className="space-y-4">
           <Card className="border-border/50 shadow-md">
             <CardHeader>
@@ -211,11 +203,13 @@ const Profile = () => {
                     onChange={(e) => handleInputChange("full_name", e.target.value)}
                     className={errors.full_name ? "border-destructive" : ""}
                   />
-                  {errors.full_name && <p className="text-sm text-destructive">{errors.full_name}</p>}
+                  {errors.full_name && (
+                    <p className="text-sm text-destructive">{errors.full_name}</p>
+                  )}
                 </div>
               ) : (
                 <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-                  <User className="w-5 h-5 text-primary" />
+                  <User className="w-5 h-5 text-accent" />
                   <div>
                     <p className="text-xs text-muted-foreground">Full Name</p>
                     <p className="font-medium">{profile?.full_name}</p>
@@ -224,35 +218,12 @@ const Profile = () => {
               )}
               
               <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-                <Mail className="w-5 h-5 text-primary" />
+                <Mail className="w-5 h-5 text-accent" />
                 <div>
                   <p className="text-xs text-muted-foreground">Email</p>
                   <p className="font-medium">{profile?.email}</p>
                 </div>
               </div>
-              
-              {isEditing ? (
-                <div className="space-y-2">
-                  <Label htmlFor="roll_number">Roll Number</Label>
-                  <Input
-                    id="roll_number"
-                    value={editForm.roll_number}
-                    onChange={(e) => handleInputChange("roll_number", e.target.value)}
-                    className={errors.roll_number ? "border-destructive" : ""}
-                  />
-                  {errors.roll_number && <p className="text-sm text-destructive">{errors.roll_number}</p>}
-                </div>
-              ) : (
-                profile?.roll_number && (
-                  <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-                    <Hash className="w-5 h-5 text-primary" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Roll Number</p>
-                      <p className="font-medium">{profile.roll_number}</p>
-                    </div>
-                  </div>
-                )
-              )}
             </CardContent>
           </Card>
 
@@ -262,54 +233,33 @@ const Profile = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {isEditing ? (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="course">Course</Label>
-                    <Input
-                      id="course"
-                      value={editForm.course}
-                      onChange={(e) => handleInputChange("course", e.target.value)}
-                      className={errors.course ? "border-destructive" : ""}
-                    />
-                    {errors.course && <p className="text-sm text-destructive">{errors.course}</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="department">Department</Label>
-                    <Input
-                      id="department"
-                      value={editForm.department}
-                      onChange={(e) => handleInputChange("department", e.target.value)}
-                      className={errors.department ? "border-destructive" : ""}
-                    />
-                    {errors.department && <p className="text-sm text-destructive">{errors.department}</p>}
-                  </div>
-                </>
-              ) : (
-                <>
-                  {profile?.course && (
-                    <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-                      <BookOpen className="w-5 h-5 text-accent" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Course</p>
-                        <p className="font-medium">{profile.course}</p>
-                      </div>
-                    </div>
+                <div className="space-y-2">
+                  <Label htmlFor="department">Department</Label>
+                  <Input
+                    id="department"
+                    value={editForm.department}
+                    onChange={(e) => handleInputChange("department", e.target.value)}
+                    className={errors.department ? "border-destructive" : ""}
+                  />
+                  {errors.department && (
+                    <p className="text-sm text-destructive">{errors.department}</p>
                   )}
-                  <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-                    <Building className="w-5 h-5 text-accent" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Department</p>
-                      <p className="font-medium">{profile?.department}</p>
-                    </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                  <Building className="w-5 h-5 text-primary" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Department</p>
+                    <p className="font-medium">{profile?.department}</p>
                   </div>
-                </>
+                </div>
               )}
             </CardContent>
           </Card>
 
           {isEditing && (
             <div className="flex gap-3">
-              <Button onClick={handleSave} className="flex-1 bg-gradient-to-r from-primary to-primary/90">
+              <Button onClick={handleSave} className="flex-1 bg-gradient-to-r from-accent to-accent/90">
                 <Save className="w-4 h-4 mr-2" />
                 Save Changes
               </Button>
@@ -320,11 +270,19 @@ const Profile = () => {
             </div>
           )}
         </div>
-      </main>
 
-      <BottomNav />
+        <div className="mt-8">
+          <Button
+            onClick={() => navigate("/faculty")}
+            variant="outline"
+            className="w-full"
+          >
+            Back to Dashboard
+          </Button>
+        </div>
+      </main>
     </div>
   );
 };
 
-export default Profile;
+export default FacultyProfile;

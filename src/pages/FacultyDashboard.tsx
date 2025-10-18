@@ -73,7 +73,7 @@ const FacultyDashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/faculty/profile")}>
               <User className="w-5 h-5" />
             </Button>
             <Button variant="ghost" size="icon" onClick={handleSignOut}>
