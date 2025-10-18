@@ -117,7 +117,7 @@ const GenerateAttendanceQR = () => {
       
       // Update state
       setQrCodeUrl(qrCodeDataUrl);
-      setSessionId(session.session_id);
+      setSessionId(sessionId || localSessionId);
       setCountdown(90);
       
     } catch (error: any) {
