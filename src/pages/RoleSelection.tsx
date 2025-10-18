@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,33 @@ const RoleSelection = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    checkExistingProfile();
+  }, []);
+
+  const checkExistingProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/auth");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profile) {
+        // User already has a profile, redirect to their dashboard
+        navigate(profile.role === "student" ? "/student" : "/faculty");
+      }
+    } catch (error) {
+      console.error("Error checking profile:", error);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!selectedRole) {
       toast.error("Please select a role");
@@ -28,6 +55,21 @@ const RoleSelection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
+      // Check if profile already exists
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (existingProfile) {
+        // Profile already exists, redirect to appropriate dashboard
+        toast.info("Profile already exists, redirecting...");
+        navigate(existingProfile.role === "student" ? "/student" : "/faculty");
+        return;
+      }
+
+      // Create new profile
       const { error } = await supabase.from("profiles").insert({
         id: user.id,
         email: user.email!,
