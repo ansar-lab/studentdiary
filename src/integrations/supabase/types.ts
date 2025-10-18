@@ -95,6 +95,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          profile_picture_url: string | null
           role: Database["public"]["Enums"]["app_role"]
           roll_number: string | null
           updated_at: string | null
@@ -106,6 +107,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          profile_picture_url?: string | null
           role: Database["public"]["Enums"]["app_role"]
           roll_number?: string | null
           updated_at?: string | null
@@ -117,6 +119,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          profile_picture_url?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           roll_number?: string | null
           updated_at?: string | null

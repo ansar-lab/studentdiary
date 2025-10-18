@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { BookOpen, LogOut, User, Mail, Building, Edit, Save, X } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { BookOpen, LogOut, User, Mail, Building, Edit, Save, X, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -21,6 +22,7 @@ interface Profile {
   department: string;
   role: string;
   created_at: string;
+  profile_picture_url: string | null;
 }
 
 const FacultyProfile = () => {
@@ -32,6 +34,8 @@ const FacultyProfile = () => {
     department: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -131,6 +135,60 @@ const FacultyProfile = () => {
     }
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please upload an image file');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size must be less than 5MB');
+        return;
+      }
+
+      setUploading(true);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/profile.${fileExt}`;
+
+      // Upload image to storage
+      const { error: uploadError } = await supabase.storage
+        .from('profile-pictures')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-pictures')
+        .getPublicUrl(filePath);
+
+      // Update profile with image URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ profile_picture_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      toast.success('Profile picture updated successfully!');
+      loadProfile();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
@@ -178,8 +236,29 @@ const FacultyProfile = () => {
           <div className="h-32 bg-gradient-to-r from-accent to-primary"></div>
           <CardContent className="relative pt-0 pb-6">
             <div className="flex flex-col items-center -mt-16 mb-4">
-              <div className="w-32 h-32 bg-gradient-to-br from-accent to-primary rounded-full flex items-center justify-center text-5xl text-white font-bold border-4 border-card shadow-xl">
-                {profile?.full_name?.charAt(0).toUpperCase()}
+              <div className="relative group">
+                <Avatar className="w-32 h-32 border-4 border-card shadow-xl">
+                  <AvatarImage src={profile?.profile_picture_url || undefined} alt={profile?.full_name} />
+                  <AvatarFallback className="bg-gradient-to-br from-accent to-primary text-5xl text-primary-foreground font-bold">
+                    {profile?.full_name?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  className="absolute bottom-0 right-0 rounded-full w-10 h-10 shadow-lg"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  <Camera className="w-5 h-5" />
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
               </div>
               <h2 className="text-2xl font-heading font-bold mt-4">{profile?.full_name}</h2>
               <p className="text-muted-foreground capitalize">{profile?.role}</p>
