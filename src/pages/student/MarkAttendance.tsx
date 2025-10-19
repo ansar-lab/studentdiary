@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { authenticateWithWebAuthn } from "@/lib/webauthn";
 import { getAISuggestions } from "@/lib/ai";
 
 const ScanAttendanceQR = () => {
@@ -83,16 +82,7 @@ const ScanAttendanceQR = () => {
           return;
         }
 
-        // Require biometric authentication (WebAuthn) before marking attendance
-        try {
-          await authenticateWithWebAuthn(session.session_id, user.id);
-        } catch (webauthnErr) {
-          console.error('WebAuthn failed:', webauthnErr);
-          toast.error('Biometric authentication required to mark attendance');
-          return;
-        }
-
-        // Insert attendance record
+        // Insert attendance record (biometric authentication removed)
         const { error: insertError } = await supabase.from("attendance_records").insert({
           student_id: user.id,
           session_id: session.session_id,
