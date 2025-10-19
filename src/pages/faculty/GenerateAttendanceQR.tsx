@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import { Loader2, RefreshCw, Clock } from "lucide-react";
@@ -16,6 +18,7 @@ const GenerateAttendanceQR = () => {
   const [qrData, setQrData] = useState<any>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [currentSubject, setCurrentSubject] = useState<string>("");
+  const [sessionId, setSessionId] = useState<string>("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,10 +51,38 @@ const GenerateAttendanceQR = () => {
   const generateQRCode = async () => {
     try {
       setLoading(true);
-      
-      // First deactivate any existing session
+
+      // Basic validation for Session ID and Name
+      const sid = sessionId.trim();
+      const sname = (currentSubject || "").trim();
+      const idRegex = /^[A-Za-z0-9-_]{3,64}$/;
+      if (!sid || !idRegex.test(sid)) {
+        toast.error("Enter a valid Session ID (3-64 chars: letters, numbers, - or _).");
+        return;
+      }
+      if (!sname || sname.length < 2 || sname.length > 100) {
+        toast.error("Enter a valid Session Name (2-100 chars).");
+        return;
+      }
+
+      // Ensure Session ID not already in use (avoids duplicates on validation)
+      const { data: existing } = await supabase
+        .from("attendance_sessions")
+        .select("session_id, is_active, expires_at")
+        .eq("session_id", sid)
+        .maybeSingle();
+
+      if (existing) {
+        const notExpired = existing.expires_at ? new Date(existing.expires_at).getTime() > Date.now() : false;
+        if (existing.is_active && notExpired) {
+          toast.error("Session ID already in use. Choose a different ID.");
+          return;
+        }
+      }
+
+      // First deactivate any existing session for this screen
       await deactivateSession();
-      
+
       // Clear existing QR data immediately
       setQrData(null);
       setTimeLeft(0);
@@ -59,23 +90,23 @@ const GenerateAttendanceQR = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      const sessionId = uuidv4();
       const now = new Date();
       const expiresAt = new Date(now.getTime() + QR_EXPIRATION_SECONDS * 1000);
 
       const newQrData = {
-        session_id: sessionId,
+        session_id: sid,
+        session_name: sname,
         created_by: user.id,
-        subject: currentSubject || "General",
         timestamp: now.toISOString(),
+        v: 1,
       };
 
       const { error: insertError } = await supabase
         .from("attendance_sessions")
         .insert({
-          session_id: sessionId,
+          session_id: sid,
           class_id: "default-class",
-          subject: currentSubject || "General",
+          subject: sname,
           created_at: now.toISOString(),
           expires_at: expiresAt.toISOString(),
           is_active: true,
@@ -127,6 +158,26 @@ const GenerateAttendanceQR = () => {
             <CardDescription>QR valid for 90 seconds only</CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="space-y-4 mb-4">
+              <div className="grid gap-2">
+                <Label htmlFor="sessionId">Session ID</Label>
+                <Input
+                  id="sessionId"
+                  placeholder="e.g. CSE101-2025-10-19"
+                  value={sessionId}
+                  onChange={(e) => setSessionId(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="sessionName">Session Name</Label>
+                <Input
+                  id="sessionName"
+                  placeholder="e.g. Computer Networks"
+                  value={currentSubject}
+                  onChange={(e) => setCurrentSubject(e.target.value)}
+                />
+              </div>
+            </div>
             {qrData ? (
               <div className="flex flex-col items-center">
                 <div className="bg-white p-4 rounded-lg mb-4">
