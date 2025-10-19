@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, GraduationCap, BookOpen, Lightbulb, LogOut, User, Clock, QrCode } from "lucide-react";
+import { Calendar, GraduationCap, BookOpen, Lightbulb, LogOut, User, Clock, QrCode, FileText, PartyPopper } from "lucide-react";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
 
@@ -219,12 +219,12 @@ const StudentDashboard = () => {
           {/* Events Card */}
           <Card 
             className="border-border/50 shadow-md hover:shadow-xl transition-all cursor-pointer group"
-            onClick={() => navigate("/student/calendar")}
+            onClick={() => navigate("/student/events")}
           >
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Calendar className="w-6 h-6 text-primary" />
+                  <PartyPopper className="w-6 h-6 text-primary" />
                 </div>
                 <div className="text-right">
                   <p className="text-3xl font-bold text-primary">{upcomingEvents}</p>
@@ -233,6 +233,43 @@ const StudentDashboard = () => {
               </div>
               <CardTitle className="text-lg mt-4">Events</CardTitle>
               <CardDescription>Stay updated on academic events</CardDescription>
+            </CardHeader>
+          </Card>
+
+          {/* Assignments Card */}
+          <Card 
+            className="border-border/50 shadow-md hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => navigate("/student/assignments")}
+          >
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <FileText className="w-6 h-6 text-accent" />
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-accent">
+                    <BookOpen className="w-8 h-8" />
+                  </p>
+                </div>
+              </div>
+              <CardTitle className="text-lg mt-4">Assignments</CardTitle>
+              <CardDescription>View and manage your assignments</CardDescription>
+            </CardHeader>
+          </Card>
+
+          {/* Calendar Card */}
+          <Card 
+            className="border-border/50 shadow-md hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => navigate("/student/calendar")}
+          >
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Calendar className="w-6 h-6 text-primary" />
+                </div>
+              </div>
+              <CardTitle className="text-lg mt-4">Calendar</CardTitle>
+              <CardDescription>View your academic calendar</CardDescription>
             </CardHeader>
           </Card>
         </div>

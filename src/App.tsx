@@ -18,6 +18,11 @@ import Timetable from "./pages/student/Timetable";
 import FacultyProfile from "./pages/faculty/Profile";
 import GenerateAttendanceQR from "./pages/faculty/GenerateAttendanceQR";
 import MarkAttendance from "./pages/student/MarkAttendance";
+import UploadAssignment from "./pages/faculty/UploadAssignment";
+import CreateEvent from "./pages/faculty/CreateEvent";
+import ViewAttendance from "./pages/faculty/ViewAttendance";
+import Assignments from "./pages/student/Assignments";
+import Events from "./pages/student/Events";
 
 const queryClient = new QueryClient();
 
@@ -43,7 +48,12 @@ const App = () => {
             <Route path="/faculty" element={<FacultyDashboard />} />
             <Route path="/faculty/profile" element={<FacultyProfile />} />
             <Route path="/faculty/generate-attendance-qr" element={<GenerateAttendanceQR />} />
+            <Route path="/faculty/upload-assignment" element={<UploadAssignment />} />
+            <Route path="/faculty/create-event" element={<CreateEvent />} />
+            <Route path="/faculty/view-attendance" element={<ViewAttendance />} />
             <Route path="/student/mark-attendance" element={<MarkAttendance />} />
+            <Route path="/student/assignments" element={<Assignments />} />
+            <Route path="/student/events" element={<Events />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
