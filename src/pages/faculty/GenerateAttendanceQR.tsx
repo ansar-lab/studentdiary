@@ -1,171 +1,160 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
+import { Loader2, RefreshCw, Clock } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
+import { v4 as uuidv4 } from "uuid";
+
+const QR_EXPIRATION_SECONDS = 90;
 
 const GenerateAttendanceQR = () => {
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [courseId, setCourseId] = useState("CSE101"); // Default course ID for demo
-  const [facultyId, setFacultyId] = useState<string | null>(null);
+  const [qrData, setQrData] = useState<any>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [currentSubject, setCurrentSubject] = useState<string>("");
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Get faculty ID from auth session
-    const getFacultyId = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.user) {
-        setFacultyId(data.session.user.id);
-      }
-    };
-
-    getFacultyId();
+    checkAuth();
   }, []);
 
-  const generateQRCode = async () => {
-    setLoading(true);
-    try {
-      const { data: user } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error("You must be logged in to generate a QR code");
-        setLoading(false);
-        return;
-      }
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (qrData && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            deactivateSession();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [qrData, timeLeft]);
 
-      // Use the correct column name for the table
-      const { error: tableCheckError } = await supabase
-        .from("attendance_sessions")
-        .select("session_id")
-        .limit(1);
-      
-      if (tableCheckError) {
-        // If table doesn't exist, create it
-        toast.error("Database setup required. Please contact administrator.");
-        console.error("Table error:", tableCheckError);
-        setLoading(false);
-        return;
-      }
-      
-      // Create a new attendance session
-      const { data, error } = await supabase
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return navigate("/auth");
+
+    const { data: faculty, error } = await supabase
+      .from("faculty")
+      .select("*")
+      .eq("faculty_id", user.id)
+      .single();
+
+    if (error || !faculty) {
+      toast.error("You don't have permission to access this page");
+      return navigate("/student/dashboard");
+    }
+
+    if (faculty && faculty.current_subject) {
+      setCurrentSubject(faculty.current_subject);
+    }
+  };
+
+  const generateQRCode = async () => {
+    try {
+      setLoading(true);
+      await deactivateSession();
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const sessionId = uuidv4();
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + QR_EXPIRATION_SECONDS * 1000);
+
+      const newQrData = {
+        session_id: sessionId,
+        faculty_id: user.id,
+        subject: currentSubject || "General",
+        timestamp: now.toISOString(),
+      };
+
+      const { error: insertError } = await supabase
         .from("attendance_sessions")
         .insert({
-          class_id: 'CS101', // This would ideally come from a form or state
-          subject: 'Computer Science', // This would ideally come from a form or state
-          expires_at: new Date(Date.now() + 3600000).toISOString(), // Expires in 1 hour
-          created_by: user.user.id
-        })
-        .select('session_id')
-        .single();
+          session_id: sessionId,
+          faculty_id: user.id,
+          subject: currentSubject || "General",
+          created_at: now.toISOString(),
+          expires_at: expiresAt.toISOString(),
+          is_active: true,
+        });
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
-      setSessionId(data.session_id);
-      toast.success("QR code generated successfully");
-    } catch (error: any) {
-      console.error("Error generating QR code:", error);
-      toast.error(error.message || "Failed to generate QR code");
+      setQrData(newQrData);
+      setTimeLeft(QR_EXPIRATION_SECONDS);
+      toast.success("QR Code generated!");
+    } catch (err: any) {
+      toast.error(err.message || "Error generating QR code");
     } finally {
       setLoading(false);
     }
   };
 
-  const closeSession = async () => {
-    if (!sessionId) return;
-
-    setLoading(true);
+  const deactivateSession = useCallback(async () => {
+    if (!qrData) return;
     try {
-      const { error } = await supabase
+      await supabase
         .from("attendance_sessions")
-        .update({ status: "closed" })
-        .eq("id", sessionId);
+        .update({ is_active: false })
+        .eq("session_id", qrData.session_id);
 
-      if (error) throw error;
-
-      setSessionId(null);
-      toast.success("Attendance session closed");
-    } catch (error: any) {
-      console.error("Error closing session:", error);
-      toast.error(error.message || "Failed to close session");
-    } finally {
-      setLoading(false);
+      setQrData(null);
+      setTimeLeft(0);
+    } catch (err) {
+      console.error("Error deactivating session:", err);
     }
+  }, [qrData]);
+
+  const formatTimeLeft = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, "0")}`;
   };
-
-  const qrRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Generate QR code display when sessionId changes
-    if (sessionId && qrRef.current) {
-      // Simple visual representation of a QR code (placeholder)
-      qrRef.current.innerHTML = `
-        <div class="qr-code-display">
-          <div class="text-center p-4 bg-white rounded-lg" style="width: 200px; height: 200px; margin: 0 auto;">
-            <div class="font-bold mb-2">Session QR Code</div>
-            <div class="text-xs overflow-hidden break-all">${sessionId}</div>
-            <div class="border-2 border-black mt-2 p-2 rounded">
-              <div class="grid grid-cols-5 gap-1">
-                ${Array(25).fill(0).map(() => 
-                  `<div class="w-6 h-6 ${Math.random() > 0.5 ? 'bg-black' : 'bg-white'}"></div>`
-                ).join('')}
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-  }, [sessionId]);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F9F5EB]">
       <div className="flex-1 container mx-auto p-4">
         <h1 className="text-2xl font-bold text-[#7D3C0A] mb-4">Generate Attendance QR</h1>
-        
-        <Card className="bg-[#F9F5EB] border-[#E4DCCF] mb-6">
+        <Card className="bg-[#F9F5EB] border-[#E4DCCF]">
           <CardHeader>
             <CardTitle className="text-[#7D3C0A]">Attendance QR Code</CardTitle>
-            <CardDescription>Generate a QR code for students to scan and mark attendance</CardDescription>
+            <CardDescription>QR valid for 90 seconds only</CardDescription>
           </CardHeader>
           <CardContent>
-            {sessionId ? (
+            {qrData ? (
               <div className="flex flex-col items-center">
-                <div className="bg-white p-4 rounded-lg mb-4" ref={qrRef}>
-                  {/* QR code will be rendered here */}
+                <div className="bg-white p-4 rounded-lg mb-4">
+                  <QRCodeSVG value={JSON.stringify(qrData)} size={250} level="H" includeMargin />
                 </div>
-                <p className="text-sm text-gray-600 mb-4">
-                  Session ID: {sessionId}
-                </p>
-                <Button 
-                  className="w-full bg-red-500 hover:bg-red-600 text-white"
-                  onClick={closeSession}
-                  disabled={loading}
+                <div className="flex items-center mb-2 text-[#7D3C0A]">
+                  <Clock className="mr-2 h-5 w-5" />
+                  <span>Expires in: {formatTimeLeft(timeLeft)}</span>
+                </div>
+                <Button
+                  className="w-full bg-[#7FB3D5] hover:bg-[#5499C7] text-white"
+                  onClick={generateQRCode}
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Closing Session...
-                    </>
-                  ) : (
-                    "Close Session"
-                  )}
+                  <RefreshCw className="mr-2 h-4 w-4" /> Generate New
                 </Button>
               </div>
             ) : (
-              <Button 
+              <Button
                 className="w-full bg-[#7FB3D5] hover:bg-[#5499C7] text-white"
                 onClick={generateQRCode}
                 disabled={loading}
               >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  "Generate QR Code"
-                )}
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Generate QR Code"}
               </Button>
             )}
           </CardContent>
