@@ -56,16 +56,16 @@ const StudentDashboard = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Load attendance stats
-      const { data: attendance } = await supabase
-        .from("attendance")
+      // Load attendance stats from attendance_records (QR scans)
+      const { data: attendanceRecords } = await supabase
+        .from("attendance_records")
         .select("*")
         .eq("student_id", user.id);
 
-      if (attendance) {
-        setAttendanceCount(attendance.length);
-        const presentCount = attendance.filter(a => a.status === "present").length;
-        setAttendancePercentage(attendance.length > 0 ? Math.round((presentCount / attendance.length) * 100) : 0);
+      if (attendanceRecords) {
+        setAttendanceCount(attendanceRecords.length);
+        // All QR scans count as present
+        setAttendancePercentage(attendanceRecords.length > 0 ? 100 : 0);
       }
 
       // Load today's classes
