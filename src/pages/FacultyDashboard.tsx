@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, QrCode, Upload, Calendar, LogOut, User, Users, QrCodeIcon } from "lucide-react";
+import { BookOpen, QrCode, Upload, Calendar, LogOut, User, Users, FileText, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 const FacultyDashboard = () => {
@@ -175,7 +175,7 @@ const FacultyDashboard = () => {
             <CardHeader>
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Upload className="w-8 h-8 text-white" />
+                  <FileText className="w-8 h-8 text-white" />
                 </div>
                 <div>
                   <CardTitle className="text-xl">Upload Assignment</CardTitle>
@@ -184,7 +184,10 @@ const FacultyDashboard = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <Button className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary">
+              <Button 
+                onClick={() => navigate("/faculty/upload-assignment")}
+                className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary"
+              >
                 Upload Files
               </Button>
             </CardContent>
@@ -194,7 +197,7 @@ const FacultyDashboard = () => {
             <CardHeader>
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-accent to-primary rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <BookOpen className="w-8 h-8 text-white" />
+                  <Eye className="w-8 h-8 text-white" />
                 </div>
                 <div>
                   <CardTitle className="text-xl">View Attendance</CardTitle>
@@ -203,7 +206,11 @@ const FacultyDashboard = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" className="w-full border-2">
+              <Button 
+                onClick={() => navigate("/faculty/view-attendance")}
+                variant="outline" 
+                className="w-full border-2"
+              >
                 View Records
               </Button>
             </CardContent>
@@ -222,7 +229,11 @@ const FacultyDashboard = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" className="w-full border-2">
+              <Button 
+                onClick={() => navigate("/faculty/create-event")}
+                variant="outline" 
+                className="w-full border-2"
+              >
                 Add Event
               </Button>
             </CardContent>

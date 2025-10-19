@@ -9,11 +9,10 @@ import BottomNav from "@/components/BottomNav";
 import { format } from "date-fns";
 
 interface AttendanceRecord {
-  id: string;
-  date: string;
+  record_id: string;
+  scan_time: string;
   subject: string;
-  status: string;
-  created_at: string;
+  session_id: string;
 }
 
 const Attendance = () => {
@@ -39,10 +38,10 @@ const Attendance = () => {
       if (!user) return;
 
       const { data, error } = await supabase
-        .from("attendance")
+        .from("attendance_records")
         .select("*")
         .eq("student_id", user.id)
-        .order("date", { ascending: false });
+        .order("scan_time", { ascending: false });
 
       if (error) throw error;
       setAttendanceRecords(data || []);
@@ -60,25 +59,24 @@ const Attendance = () => {
 
   const calculateAttendancePercentage = () => {
     if (attendanceRecords.length === 0) return 0;
-    const presentCount = attendanceRecords.filter(r => r.status === "present").length;
-    return Math.round((presentCount / attendanceRecords.length) * 100);
+    // All scanned QR records count as present
+    return 100;
   };
 
   const getSubjectStats = () => {
-    const subjects = new Map<string, { total: number; present: number }>();
+    const subjects = new Map<string, { total: number }>();
     
     attendanceRecords.forEach(record => {
-      const current = subjects.get(record.subject) || { total: 0, present: 0 };
+      const current = subjects.get(record.subject) || { total: 0 };
       subjects.set(record.subject, {
-        total: current.total + 1,
-        present: current.present + (record.status === "present" ? 1 : 0)
+        total: current.total + 1
       });
     });
 
     return Array.from(subjects.entries()).map(([subject, stats]) => ({
       subject,
-      percentage: Math.round((stats.present / stats.total) * 100),
-      present: stats.present,
+      percentage: 100, // All scanned records are present
+      present: stats.total,
       total: stats.total
     }));
   };
@@ -127,9 +125,9 @@ const Attendance = () => {
             <CardTitle className="text-2xl">Overall Attendance</CardTitle>
             <div className="flex items-center justify-between mt-4">
               <div>
-                <p className="text-5xl font-bold text-primary">{overallPercentage}%</p>
+                <p className="text-5xl font-bold text-primary">{attendanceRecords.length}</p>
                 <p className="text-muted-foreground mt-1">
-                  {attendanceRecords.filter(r => r.status === "present").length} / {attendanceRecords.length} classes
+                  Classes attended
                 </p>
               </div>
               <div className="w-24 h-24 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center">
@@ -184,22 +182,18 @@ const Attendance = () => {
             ) : (
               <div className="space-y-3">
                 {attendanceRecords.slice(0, 10).map((record) => (
-                  <div key={record.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <div key={record.record_id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${
-                        record.status === "present" ? "bg-accent" : "bg-destructive"
-                      }`} />
+                      <div className="w-3 h-3 rounded-full bg-accent" />
                       <div>
                         <p className="font-medium">{record.subject}</p>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(record.date), "MMM dd, yyyy")}
+                          {format(new Date(record.scan_time), "MMM dd, yyyy · hh:mm a")}
                         </p>
                       </div>
                     </div>
-                    <span className={`text-sm font-medium capitalize ${
-                      record.status === "present" ? "text-accent" : "text-destructive"
-                    }`}>
-                      {record.status}
+                    <span className="text-sm font-medium text-accent">
+                      Present
                     </span>
                   </div>
                 ))}

@@ -5,7 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 const ScanAttendanceQR = () => {
   useEffect(() => {
-    const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } });
+    const scanner = new Html5QrcodeScanner(
+      "reader", 
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      false
+    );
 
     const onScanSuccess = async (decodedText: string) => {
       let qrData: any = null;
@@ -63,7 +67,21 @@ const ScanAttendanceQR = () => {
           return;
         }
 
-        // Insert using the proper column name (scan_time) and include minimal fields
+        // Prevent duplicate attendance for the same session
+        const { data: existing } = await supabase
+          .from("attendance_records")
+          .select("record_id")
+          .eq("student_id", user.id)
+          .eq("session_id", session.session_id)
+          .maybeSingle();
+
+        if (existing) {
+          toast.success("Attendance already marked for this session.");
+          try { await scanner.clear(); } catch {}
+          return;
+        }
+
+        // Insert attendance record
         const { error: insertError } = await supabase.from("attendance_records").insert({
           student_id: user.id,
           session_id: session.session_id,
