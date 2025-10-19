@@ -135,9 +135,10 @@ const GenerateAttendanceQR = () => {
         v: 1,
       };
 
-      const { error: insertError } = await supabase
+      // First try to update if exists but inactive, otherwise insert
+      const { error: upsertError } = await supabase
         .from("attendance_sessions")
-        .insert({
+        .upsert({
           session_id: sid,
           class_id: "default-class",
           subject: sname,
@@ -145,9 +146,12 @@ const GenerateAttendanceQR = () => {
           expires_at: expiresAt.toISOString(),
           is_active: true,
           created_by: user.id
+        }, {
+          onConflict: 'session_id',
+          ignoreDuplicates: false
         });
 
-      if (insertError) throw insertError;
+      if (upsertError) throw upsertError;
 
       // Set new QR data and timer
       setQrData(newQrData);
