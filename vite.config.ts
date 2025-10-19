@@ -26,7 +26,6 @@ export default defineConfig(({ mode }) => ({
         background_color: '#FBF7EB',
         theme_color: '#F6EFDF',
         orientation: 'portrait',
-        permissions: ['camera', 'geolocation'],
         icons: [
           {
             src: 'pwa-192x192.svg',

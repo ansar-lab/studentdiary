@@ -5,7 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 const ScanAttendanceQR = () => {
   useEffect(() => {
-    const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } });
+    const scanner = new Html5QrcodeScanner(
+      "reader", 
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      false
+    );
 
     const onScanSuccess = async (decodedText: string) => {
       let qrData: any = null;

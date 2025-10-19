@@ -42,41 +42,7 @@ const GenerateAttendanceQR = () => {
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return navigate("/auth");
-
-    try {
-      // First check if user exists in faculty table
-      const { data: faculty, error } = await supabase
-        .from("faculty")
-        .select("*")
-        .eq("faculty_id", user.id)
-        .single();
-
-      // If no faculty record found, create one
-      if (error || !faculty) {
-        // Create a faculty record for this user
-        const { error: insertError } = await supabase
-          .from("faculty")
-          .insert({
-            faculty_id: user.id,
-            name: user.email?.split('@')[0] || 'Faculty',
-            email: user.email,
-            current_subject: "General"
-          });
-          
-        if (insertError) {
-          console.error("Error creating faculty record:", insertError);
-          toast.error("Error setting up your account");
-          return;
-        }
-        
-        setCurrentSubject("General");
-      } else if (faculty && faculty.current_subject) {
-        setCurrentSubject(faculty.current_subject);
-      }
-    } catch (err) {
-      console.error("Auth check error:", err);
-      toast.error("Error checking authentication");
-    }
+    setCurrentSubject("General");
   };
 
   const generateQRCode = async () => {
