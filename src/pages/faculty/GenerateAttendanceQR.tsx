@@ -48,7 +48,13 @@ const GenerateAttendanceQR = () => {
   const generateQRCode = async () => {
     try {
       setLoading(true);
+      
+      // First deactivate any existing session
       await deactivateSession();
+      
+      // Clear existing QR data immediately
+      setQrData(null);
+      setTimeLeft(0);
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
@@ -78,10 +84,12 @@ const GenerateAttendanceQR = () => {
 
       if (insertError) throw insertError;
 
+      // Set new QR data and timer
       setQrData(newQrData);
       setTimeLeft(QR_EXPIRATION_SECONDS);
-      toast.success("QR Code generated!");
+      toast.success("New QR Code generated!");
     } catch (err: any) {
+      console.error("Error generating QR:", err);
       toast.error(err.message || "Error generating QR code");
     } finally {
       setLoading(false);
