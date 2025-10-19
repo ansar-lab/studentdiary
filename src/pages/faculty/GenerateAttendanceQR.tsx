@@ -43,19 +43,39 @@ const GenerateAttendanceQR = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return navigate("/auth");
 
-    const { data: faculty, error } = await supabase
-      .from("faculty")
-      .select("*")
-      .eq("faculty_id", user.id)
-      .single();
+    try {
+      // First check if user exists in faculty table
+      const { data: faculty, error } = await supabase
+        .from("faculty")
+        .select("*")
+        .eq("faculty_id", user.id)
+        .single();
 
-    if (error || !faculty) {
-      toast.error("You don't have permission to access this page");
-      return navigate("/student/dashboard");
-    }
-
-    if (faculty && faculty.current_subject) {
-      setCurrentSubject(faculty.current_subject);
+      // If no faculty record found, create one
+      if (error || !faculty) {
+        // Create a faculty record for this user
+        const { error: insertError } = await supabase
+          .from("faculty")
+          .insert({
+            faculty_id: user.id,
+            name: user.email?.split('@')[0] || 'Faculty',
+            email: user.email,
+            current_subject: "General"
+          });
+          
+        if (insertError) {
+          console.error("Error creating faculty record:", insertError);
+          toast.error("Error setting up your account");
+          return;
+        }
+        
+        setCurrentSubject("General");
+      } else if (faculty && faculty.current_subject) {
+        setCurrentSubject(faculty.current_subject);
+      }
+    } catch (err) {
+      console.error("Auth check error:", err);
+      toast.error("Error checking authentication");
     }
   };
 
@@ -73,7 +93,7 @@ const GenerateAttendanceQR = () => {
 
       const newQrData = {
         session_id: sessionId,
-        faculty_id: user.id,
+        created_by: user.id,
         subject: currentSubject || "General",
         timestamp: now.toISOString(),
       };
@@ -82,11 +102,12 @@ const GenerateAttendanceQR = () => {
         .from("attendance_sessions")
         .insert({
           session_id: sessionId,
-          faculty_id: user.id,
+          class_id: "default-class",
           subject: currentSubject || "General",
           created_at: now.toISOString(),
           expires_at: expiresAt.toISOString(),
           is_active: true,
+          created_by: user.id
         });
 
       if (insertError) throw insertError;
