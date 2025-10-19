@@ -8,18 +8,51 @@ const ScanAttendanceQR = () => {
     const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } });
 
     const onScanSuccess = async (decodedText: string) => {
+      let qrData: any = null;
       try {
-        const qrData = JSON.parse(decodedText);
+        // Some scanners return plain text or URL-encoded payloads. Try to be forgiving.
+        const trimmed = decodedText?.trim();
+        try {
+          qrData = JSON.parse(trimmed);
+        } catch (e) {
+          // If not JSON, try decodeURIComponent then parse
+          try {
+            qrData = JSON.parse(decodeURIComponent(trimmed));
+          } catch (e2) {
+            console.warn("Failed to parse QR payload as JSON", { decodedText, e, e2 });
+            toast.error("Invalid QR code");
+            return;
+          }
+        }
+
+        if (!qrData || !qrData.session_id) {
+          toast.error("Invalid QR payload");
+          return;
+        }
+
         const now = new Date();
 
-        const { data: session } = await supabase
+        // Fetch session by session_id first, then validate expiry/is_active client-side
+        const { data: session, error: sessionError } = await supabase
           .from("attendance_sessions")
           .select("*")
           .eq("session_id", qrData.session_id)
-          .eq("is_active", true)
-          .single();
+          .maybeSingle();
+
+        if (sessionError) {
+          console.error("Error fetching session:", sessionError);
+          toast.error("Error validating QR");
+          return;
+        }
 
         if (!session) {
+          toast.error("QR expired or invalid");
+          return;
+        }
+
+        // Check expiry using expires_at (server stores timestamp with timezone)
+        const expiresAt = session.expires_at ? new Date(session.expires_at) : null;
+        if (!session.is_active || (expiresAt && expiresAt.getTime() <= now.getTime())) {
           toast.error("QR expired or invalid");
           return;
         }
@@ -30,25 +63,39 @@ const ScanAttendanceQR = () => {
           return;
         }
 
-        const { error } = await supabase.from("attendance_records").insert({
+        // Insert using the proper column name (scan_time) and include minimal fields
+        const { error: insertError } = await supabase.from("attendance_records").insert({
           student_id: user.id,
           session_id: session.session_id,
           subject: session.subject,
-          timestamp: now.toISOString(),
+          scan_time: now.toISOString(),
         });
 
-        if (error) throw error;
+        if (insertError) {
+          // Unique constraint or other errors should be surfaced
+          console.error("Failed to insert attendance record:", insertError);
+          toast.error(insertError.message || "Failed to mark attendance");
+          return;
+        }
+
         toast.success("✅ Attendance marked successfully!");
-        scanner.clear();
+        // stop scanning after successful mark
+        try {
+          await scanner.clear();
+        } catch (clearErr) {
+          console.warn("Failed to clear scanner:", clearErr);
+        }
       } catch (err) {
-        console.error(err);
+        console.error("Unexpected error scanning QR:", err);
         toast.error("Invalid QR or scan failed!");
       }
     };
 
     scanner.render(onScanSuccess, (error) => console.warn("Scan error", error));
 
-    return () => scanner.clear();
+    return () => {
+      scanner.clear().catch(() => {});
+    };
   }, []);
 
   return (
