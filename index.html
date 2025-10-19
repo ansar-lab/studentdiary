@@ -12,12 +12,20 @@
     
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#F6EFDF" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- New recommended meta for modern browsers -->
+  <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="StudyNest">
     <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <!-- Icons generated from public/logo.png (run scripts/generate-icons.js) -->
+  <!-- Explicit favicon links with cache-bust to force refresh -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+  <link rel="shortcut icon" href="/favicon.ico?v=2">
+  <link rel="icon" href="/icon-192.png?v=2" media="(prefers-resolution: 192dpi)">
+  <link rel="apple-touch-icon" href="/icon-180.png?v=2">
+  <!-- Safari pinned tab -->
+  <link rel="mask-icon" href="/icon-180.png?v=2" color="#4F46E5">
 
     <meta property="og:title" content="StudyNest - Smart Academic Management" />
     <meta property="og:description" content="A smart academic PWA for students and faculty - attendance, academics, AI-powered learning tips, and event management" />

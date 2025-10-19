@@ -1,6 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180" fill="none">
-  <rect width="180" height="180" rx="30" fill="#4F46E5"/>
-  <path d="M54 90C54 70.118 70.118 54 90 54H126V90C126 109.882 109.882 126 90 126H54V90Z" fill="white"/>
-  <path d="M54 90C54 70.118 70.118 54 90 54" stroke="#4F46E5" stroke-width="8"/>
-  <rect x="72" y="72" width="36" height="36" rx="8" fill="#4F46E5"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- apple-touch-icon.svg that displays the raster logo at /logo.png -->
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180" preserveAspectRatio="xMidYMid slice">
+  <image href="/logo.png" x="0" y="0" width="180" height="180" preserveAspectRatio="xMidYMid slice"/>
 </svg>

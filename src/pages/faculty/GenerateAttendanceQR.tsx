@@ -52,7 +52,7 @@ const GenerateAttendanceQR = () => {
         .single();
 
       // If no faculty record found, create one
-      if (error || !faculty) {
+  if (error || !faculty) {
         // Create a faculty record for this user
         const { error: insertError } = await supabase
           .from("faculty")
@@ -65,7 +65,12 @@ const GenerateAttendanceQR = () => {
           
         if (insertError) {
           console.error("Error creating faculty record:", insertError);
-          toast.error("Error setting up your account");
+          // If the error indicates the table doesn't exist, give a helpful message
+          if (insertError.message && insertError.message.includes("Could not find the table")) {
+            toast.error("Database schema missing: run the migration to create 'attendance_sessions' (see supabase/migrations/20251018070000_attendance_smart_system.sql)");
+          } else {
+            toast.error("Error setting up your account");
+          }
           return;
         }
         
@@ -116,7 +121,14 @@ const GenerateAttendanceQR = () => {
       setTimeLeft(QR_EXPIRATION_SECONDS);
       toast.success("QR Code generated!");
     } catch (err: any) {
-      toast.error(err.message || "Error generating QR code");
+      // If Supabase reports missing table in the schema cache, provide actionable guidance
+      const msg = err?.message || String(err);
+      if (msg.includes("Could not find the table")) {
+        toast.error("Database table missing: run the migration file supabase/migrations/20251018070000_attendance_smart_system.sql in your Supabase project");
+        console.error("Schema error while generating QR:", err);
+      } else {
+        toast.error(msg || "Error generating QR code");
+      }
     } finally {
       setLoading(false);
     }
