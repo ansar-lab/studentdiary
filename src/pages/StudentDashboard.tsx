@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, GraduationCap, BookOpen, Lightbulb, LogOut, User, Clock, QrCode, FileText, PartyPopper } from "lucide-react";
+import { Calendar, GraduationCap, BookOpen, Lightbulb, LogOut, User, Clock, QrCode, FileText, PartyPopper, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
+import Chatbot from "@/components/Chatbot";
 
 const StudentDashboard = () => {
   const [profile, setProfile] = useState<any>(null);
@@ -268,21 +269,26 @@ const StudentDashboard = () => {
             </CardHeader>
           </Card>
 
-          {/* Events Card */}
-          <Card 
+          {/* Chatbot Card */}
+          <Card
             className="border-border/50 shadow-md hover:shadow-xl transition-all cursor-pointer group"
-            onClick={() => navigate("/student/events")}
+            onClick={() => {/* Open chatbot modal or navigate */}}
           >
             <CardHeader>
               <div className="flex items-center justify-between">
-                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <PartyPopper className="w-6 h-6 text-accent" />
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <MessageCircle className="w-6 h-6 text-primary" />
                 </div>
               </div>
-              <CardTitle className="text-lg mt-4">Events</CardTitle>
-              <CardDescription>Check upcoming events</CardDescription>
+              <CardTitle className="text-lg mt-4">AI Chatbot</CardTitle>
+              <CardDescription>Get help from our AI assistant</CardDescription>
             </CardHeader>
           </Card>
+        </div>
+
+        {/* Chatbot Section */}
+        <div className="mt-8">
+          <Chatbot />
         </div>
 
         {/* AI Suggestions Card */}

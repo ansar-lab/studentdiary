@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { authenticateWithWebAuthn } from "@/lib/webauthn";
+import { getAISuggestions } from "@/lib/ai";
 
 const ScanAttendanceQR = () => {
   useEffect(() => {
@@ -81,6 +83,15 @@ const ScanAttendanceQR = () => {
           return;
         }
 
+        // Require biometric authentication (WebAuthn) before marking attendance
+        try {
+          await authenticateWithWebAuthn(session.session_id, user.id);
+        } catch (webauthnErr) {
+          console.error('WebAuthn failed:', webauthnErr);
+          toast.error('Biometric authentication required to mark attendance');
+          return;
+        }
+
         // Insert attendance record
         const { error: insertError } = await supabase.from("attendance_records").insert({
           student_id: user.id,
@@ -97,6 +108,18 @@ const ScanAttendanceQR = () => {
         }
 
         toast.success("✅ Attendance marked successfully!");
+
+        // Ask server-side AI for suggestions based on this attendance
+        try {
+          const suggestions = await getAISuggestions({ studentId: user.id, sessionId: session.session_id, subject: session.subject });
+          console.log('AI suggestions:', suggestions);
+          // Optionally show a toast or UI element with suggestions
+          if (suggestions && suggestions.message) {
+            toast(suggestions.message);
+          }
+        } catch (aiErr) {
+          console.warn('AI suggestion failed:', aiErr);
+        }
         // stop scanning after successful mark
         try {
           await scanner.clear();

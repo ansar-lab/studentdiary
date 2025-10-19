@@ -1,21 +1,10 @@
-# QR Scan Camera Fix Tasks
+# TODO: Integrate Gemini API and WebAuthn
 
-## Current Status
-- [x] Analyze QR scan and generate features
-- [x] Identify root causes (HTTPS, PWA manifest, camera permissions)
-- [x] Fix PWA manifest inconsistencies in vite.config.ts
-- [x] Update public/manifest.json to add camera permissions
-- [x] Improve camera permission error handling in MarkAttendance.tsx
-- [x] Fix WebAuthn API usage
-- [x] Completely redesign MarkAttendance.tsx with Html5QrcodeScanner
-- [x] Build successful
-
-## Pending Tasks
-- [x] Test camera access after fixes (Dev server running on http://localhost:8080)
-- [ ] Verify QR generation still works
-- [ ] Test on HTTPS/localhost
-
-## Files Edited
-- vite.config.ts (PWA manifest fixes)
-- public/manifest.json (camera permissions)
-- src/pages/student/MarkAttendance.tsx (complete redesign with proper QR scanner)
+## Tasks
+- [x] Add @google/generative-ai dependency to package.json
+- [x] Update src/lib/ai.ts to use Gemini API for AI suggestions based on attendance
+- [x] Create src/components/Chatbot.tsx for integrated chatbot functionality
+- [x] Integrate Chatbot into src/pages/StudentDashboard.tsx
+- [x] Install dependencies
+- [x] Test AI suggestions and chatbot
+- [x] Verify WebAuthn biometric authentication during attendance scanning
