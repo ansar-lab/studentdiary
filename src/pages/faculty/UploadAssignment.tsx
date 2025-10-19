@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload } from "lucide-react";
 
@@ -18,7 +18,7 @@ const UploadAssignment = () => {
     description: "",
     subject: "",
     dueDate: "",
-    fileUrl: "",
+    fileUrl: ""
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,26 +26,33 @@ const UploadAssignment = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("assignments").insert({
-        title: formData.title,
-        description: formData.description,
-        subject: formData.subject,
-        due_date: formData.dueDate,
-        file_url: formData.fileUrl,
-      });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from("assignments")
+        .insert({
+          title: formData.title,
+          description: formData.description,
+          subject: formData.subject,
+          due_date: formData.dueDate,
+          file_url: formData.fileUrl,
+          created_by: user.id
+        });
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Assignment uploaded successfully",
+        description: "Assignment uploaded successfully"
       });
+
       navigate("/faculty");
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
@@ -53,7 +60,7 @@ const UploadAssignment = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 p-4">
       <div className="max-w-2xl mx-auto">
         <Button
           variant="ghost"
@@ -74,13 +81,11 @@ const UploadAssignment = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="title">Assignment Title</Label>
+                <Label htmlFor="title">Title</Label>
                 <Input
                   id="title"
                   value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
                 />
               </div>
@@ -90,9 +95,7 @@ const UploadAssignment = () => {
                 <Input
                   id="subject"
                   value={formData.subject}
-                  onChange={(e) =>
-                    setFormData({ ...formData, subject: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                   required
                 />
               </div>
@@ -102,9 +105,7 @@ const UploadAssignment = () => {
                 <Textarea
                   id="description"
                   value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={4}
                 />
               </div>
@@ -115,9 +116,7 @@ const UploadAssignment = () => {
                   id="dueDate"
                   type="datetime-local"
                   value={formData.dueDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, dueDate: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                   required
                 />
               </div>
@@ -129,13 +128,11 @@ const UploadAssignment = () => {
                   type="url"
                   placeholder="https://example.com/file.pdf"
                   value={formData.fileUrl}
-                  onChange={(e) =>
-                    setFormData({ ...formData, fileUrl: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, fileUrl: e.target.value })}
                 />
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full">
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Uploading..." : "Upload Assignment"}
               </Button>
             </form>

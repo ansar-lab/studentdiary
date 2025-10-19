@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Calendar } from "lucide-react";
-import { format } from "date-fns";
 import BottomNav from "@/components/BottomNav";
 
 interface Event {
@@ -13,13 +13,13 @@ interface Event {
   description: string;
   event_type: string;
   event_date: string;
-  created_at: string;
 }
 
 const Events = () => {
   const navigate = useNavigate();
-  const [events, setEvents] = useState<Event[]>([]);
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState<Event[]>([]);
 
   useEffect(() => {
     loadEvents();
@@ -34,20 +34,20 @@ const Events = () => {
 
       if (error) throw error;
       setEvents(data || []);
-    } catch (error) {
-      console.error("Error loading events:", error);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const isPastEvent = (eventDate: string) => {
-    return new Date(eventDate) < new Date();
-  };
-
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="p-6">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 pb-20">
+      <div className="p-4 max-w-4xl mx-auto">
         <Button
           variant="ghost"
           onClick={() => navigate("/student")}
@@ -60,42 +60,34 @@ const Events = () => {
         <h1 className="text-3xl font-bold mb-6">Events</h1>
 
         {loading ? (
-          <p>Loading events...</p>
+          <p className="text-center text-muted-foreground">Loading...</p>
         ) : events.length === 0 ? (
           <Card>
-            <CardContent className="p-6">
-              <p className="text-muted-foreground text-center">No events scheduled</p>
+            <CardContent className="p-8 text-center">
+              <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">No upcoming events</p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
             {events.map((event) => (
-              <Card key={event.id} className={isPastEvent(event.event_date) ? "opacity-60" : ""}>
+              <Card key={event.id}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <Calendar className="h-5 w-5" />
-                      {event.title}
+                    <span>{event.title}</span>
+                    <span className="text-sm font-normal text-muted-foreground">
+                      {event.event_type}
                     </span>
-                    {event.event_type && (
-                      <span className="text-sm font-normal px-3 py-1 bg-primary/10 text-primary rounded-full">
-                        {event.event_type}
-                      </span>
-                    )}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-2">
                   {event.description && (
-                    <p className="text-muted-foreground mb-3">{event.description}</p>
+                    <p className="text-muted-foreground">{event.description}</p>
                   )}
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">
-                      {format(new Date(event.event_date), "PPP")}
-                    </p>
-                    {isPastEvent(event.event_date) && (
-                      <span className="text-sm text-muted-foreground">Past Event</span>
-                    )}
-                  </div>
+                  <p className="text-sm">
+                    <span className="font-semibold">Date:</span>{" "}
+                    {new Date(event.event_date).toLocaleDateString()}
+                  </p>
                 </CardContent>
               </Card>
             ))}

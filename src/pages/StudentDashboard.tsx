@@ -246,14 +246,9 @@ const StudentDashboard = () => {
                 <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                   <FileText className="w-6 h-6 text-accent" />
                 </div>
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-accent">
-                    <BookOpen className="w-8 h-8" />
-                  </p>
-                </div>
               </div>
               <CardTitle className="text-lg mt-4">Assignments</CardTitle>
-              <CardDescription>View and manage your assignments</CardDescription>
+              <CardDescription>View and download assignments</CardDescription>
             </CardHeader>
           </Card>
 
@@ -270,6 +265,22 @@ const StudentDashboard = () => {
               </div>
               <CardTitle className="text-lg mt-4">Calendar</CardTitle>
               <CardDescription>View your academic calendar</CardDescription>
+            </CardHeader>
+          </Card>
+
+          {/* Events Card */}
+          <Card 
+            className="border-border/50 shadow-md hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => navigate("/student/events")}
+          >
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <PartyPopper className="w-6 h-6 text-accent" />
+                </div>
+              </div>
+              <CardTitle className="text-lg mt-4">Events</CardTitle>
+              <CardDescription>Check upcoming events</CardDescription>
             </CardHeader>
           </Card>
         </div>
